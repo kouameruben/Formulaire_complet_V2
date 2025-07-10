@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="bd_fatal_projet2.sqlite" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="3769"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><table title="clients" custom_title="0" dock_id="1" table="4,7:mainclients"/><dock_state state="000000ff00000000fd0000000100000002000005b000000390fc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000000005b00000012100ffffff0000026c0000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="clients" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="79"/><column index="2" value="47"/><column index="3" value="127"/><column index="4" value="127"/><column index="5" value="63"/><column index="6" value="47"/><column index="7" value="47"/><column index="8" value="54"/><column index="9" value="108"/><column index="10" value="76"/><column index="11" value="130"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="utilisateurs" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="83"/><column index="2" value="151"/><column index="3" value="361"/><column index="4" value="71"/><column index="5" value="75"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1*">
+CREATE TABLE utilisateurs (
+  id_utilisateur TEXT PRIMARY KEY,
+  nom TEXT,
+  mot_de_passe TEXT,
+  role TEXT CHECK(role IN ('admin', 'manager', 'agent', 'vendeur', 'visiteur')),
+  entrepot_id TEXT
+);
+
+
+INSERT INTO utilisateurs (id_utilisateur, nom, mot_de_passe, role, entrepot_id) VALUES
+  ('adminP',   'Admin Principal',   '$7$C6..../....Oif85IUPqh9wMi0VYKVHxr/S/J7onGNQFIuJbCvZfl9$DESHybr6AbaQ8d5mxMbluEmObIJEDfdizWhz4q1cFqD', 'admin',    NULL),
+  ('manager01', 'Manager Régional',  '$7$C6..../....Q8RNzB.FNboMuf5QoMGg/RAg/GDFOH8aB9TzHzKk5g/$w4vxbMGJ69pDF3oSH4gq6KVVxMH2OuP0SogGj2SdR/A', 'manager',  NULL),
+  ('agent01',   'Agent Lecture',     '$7$C6..../....Q8RNzB.FNboMuf5QoMGg/RAg/GDFOH8aB9TzHzKk5g/$w4vxbMGJ69pDF3oSH4gq6KVVxMH2OuP0SogGj2SdR/A', 'agent',    NULL),
+  ('vendeur01', 'Vendeur Entrepôt A','$7$C6..../....Q8RNzB.FNboMuf5QoMGg/RAg/GDFOH8aB9TzHzKk5g/$w4vxbMGJ69pDF3oSH4gq6KVVxMH2OuP0SogGj2SdR/A', 'vendeur',  'ENT-001'),
+  ('visiteur1', 'Utilisateur Visite','$7$C6..../....Q8RNzB.FNboMuf5QoMGg/RAg/GDFOH8aB9TzHzKk5g/$w4vxbMGJ69pDF3oSH4gq6KVVxMH2OuP0SogGj2SdR/A', 'visiteur', NULL);</sql><current_tab id="0"/></tab_sql></sqlb_project>

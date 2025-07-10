@@ -1,0 +1,104 @@
+library(DBI)
+library(RSQLite)
+library(pool)
+
+# Crée ou ouvre la base SQLite avec pool
+pool <- dbPool(
+  drv         = RSQLite::SQLite(),
+  dbname      = "bd_fatal_projet2.sqlite",
+  synchronous = "normal",
+  timeout     = 5000L
+)
+
+# Mode WAL pour performance/concurrence et clés étrangères
+dbExecute(pool, "PRAGMA journal_mode = WAL;")
+dbExecute(pool, "PRAGMA foreign_keys = ON;")
+
+
+db_file <- "complet_v2/bd_fatal_projet2.sqlite"
+
+
+# Crée ou ouvre la base SQLite et prépare le pool
+
+pool <- dbPool(
+  drv         = RSQLite::SQLite(),
+  dbname      = db_file,
+  synchronous = "normal",
+  timeout =5000L
+)
+
+
+dbExecute(pool,
+          "CREATE TABLE IF NOT EXISTS clients (
+     customer_id      TEXT PRIMARY KEY,
+     name             TEXT NOT NULL,
+     prenom           TEXT,
+     email            TEXT,
+     numero           TEXT NOT NULL,
+     pays             TEXT,
+     ville            TEXT,
+     quartier         TEXT,
+     adresse_livraison TEXT,
+     preferences      TEXT,
+     date_enregistrement DATE
+   );"
+)
+
+test =dbGetQuery(pool, "SELECT * FROM clients;")
+
+
+# produits
+dbExecute(pool, "
+    CREATE TABLE IF NOT EXISTS produits (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      supplier_id   INTEGER,
+      nom           TEXT,
+      categorie     TEXT,
+      description   TEXT,
+      couleur       TEXT,
+      prix_achat    REAL,
+      marque        TEXT,
+      volume        REAL,
+      poids         REAL,
+      materiau      TEXT,
+      date_ajout    DATE,
+      image_path    TEXT,
+      FOREIGN KEY(supplier_id) REFERENCES fournisseurs(id)
+    );
+  ")
+
+init_db(pool)
+
+
+
+
+# fournisseurs
+dbExecute(pool, "
+    CREATE TABLE IF NOT EXISTS fournisseurs (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      nom             TEXT    NOT NULL,
+      email           TEXT,
+      telephone       TEXT,
+      pays            TEXT,
+      type            TEXT,
+      adresse         TEXT,
+      site            TEXT,
+      responsable     TEXT,
+      contact         TEXT,
+      statut          TEXT,
+      date_crea       DATE
+    );
+  ")
+
+
+
+
+
+
+
+
+
+
+
+
+

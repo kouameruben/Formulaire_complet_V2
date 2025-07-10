@@ -1,0 +1,7 @@
+library(googlesheets4)
+gs4_auth()
+
+sheet_names("https://docs.google.com/spreadsheets/d/ton_sheet_id")
+
+
+

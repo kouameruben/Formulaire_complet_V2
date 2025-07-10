@@ -1,0 +1,55 @@
+observeEvent(input$submit, {
+  req(input$name, input$numero)
+  if (nzchar(input$email) &&
+      !grepl("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", input$email)) {
+    shinyalert("Email invalide", type = "error"); return()
+  }
+  new_id <- paste0(sample(c(0:9, LETTERS), 7, TRUE), collapse = "")
+  params <- list(
+    new_id, input$name, input$prenom, input$email, input$numero,
+    input$pays, input$ville, input$quartier,
+    input$adresse, input$preferences, as.character(Sys.Date())
+  )
+  
+  tryCatch({
+    dbWithTransaction(pool, {
+      dbExecute(pool,
+                "INSERT INTO clients (
+           customer_id, name, prenom, email, numero,
+           pays, ville, quartier,
+           adresse_livraison, preferences, date_enregistrement
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);",
+                params = params
+      )
+    })
+    # Mettre à jour le miroir en mémoire
+    df <- clients_df()
+    df <- bind_rows(df, tibble(
+      customer_id        = new_id,
+      name               = input$name,
+      prenom             = input$prenom,
+      email              = input$email,
+      numero             = input$numero,
+      pays               = input$pays,
+      ville              = input$ville,
+      quartier           = input$quartier,
+      adresse_livraison  = input$adresse,
+      preferences        = input$preferences,
+      date_enregistrement = Sys.Date()
+    ))
+    clients_df(df)
+    shinyalert("Client ajouté !", type = "success")
+    # Reset des champs
+    updateTextInput(session, "name",   value = "")
+    updateTextInput(session, "prenom", value = "")
+    updateTextInput(session, "email",  value = "")
+    updateTextInput(session, "numero", value = "")
+    updateTextInput(session, "pays",   value = "")
+    updateTextInput(session, "ville",  value = "")
+    updateTextInput(session, "quartier", value = "")
+    updateTextAreaInput(session, "adresse",     value = "")
+    updateTextAreaInput(session, "preferences", value = "")
+  }, error = function(e) {
+    shinyalert(paste("Erreur :", e$message), type = "error")
+  })
+})

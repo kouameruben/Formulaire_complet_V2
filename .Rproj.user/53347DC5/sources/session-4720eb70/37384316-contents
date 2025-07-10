@@ -1,0 +1,1815 @@
+# Chargement des bibliothèques
+library(shiny)
+library(shinyalert)
+library(shinyjs)
+library(shinythemes)
+library(shinycssloaders)
+library(dplyr)
+library(readr)
+library(readxl)
+library(DT)
+library(openxlsx)
+library(purrr)
+library(rsconnect)
+library(ggplot2)
+
+
+
+
+# Chargement des données géographiques
+donnees_geographiques <- read_excel("worldcities.xlsx")
+
+######## Interface utilisateur ########
+ui <- fluidPage(
+  useShinyalert(),
+  useShinyjs(),
+  theme = shinytheme("flatly"),
+  tags$head(
+    tags$style(HTML("
+      body { background-color: #f8f9fa; }
+      .well { 
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+        padding: 15px; 
+        margin-bottom: 20px;
+      }
+      .btn { 
+        border-radius: 5px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        width: 100%;
+        margin-top: 10px;
+      }
+      .btn:hover { transform: translateY(-1px); }
+      .form-control { border-radius: 4px; }
+      table.dataTable tbody tr:hover { background-color: #f0f8ff !important; }
+      .dataTables_filter input { border-radius: 20px; }
+      .selectize-input { border-radius: 4px; height: 40px; }
+      .shiny-spinner-container { margin-top: 50px; }
+      img { 
+        max-height: 100px !important; 
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .dt-body-center { text-align: center; }
+    "))
+  ),
+#### Utilisation d'un tabsetPanel pour regrouper les différents modules ####
+  tabsetPanel(
+    
+#### Onglet 1 : Gestion Clients ####
+    tabPanel("Gestion Clients",
+             titlePanel(
+               tags$div(
+                 icon("users", class = "fa-2x"),
+                 "Gestion Clients",
+                 style = "display: flex; align-items: center; gap: 15px; color: #2c3e50;"
+               )
+             ),
+             sidebarLayout(
+               sidebarPanel(
+                 width = 4,
+                 tags$div(class = "well",
+                          h4(icon("user-plus"), "Nouveau Client", style = "color: #3498db;"),
+                          textInput("name", tags$span("Nom", tags$span("*", style = "color: red;"))),
+                          textInput("prenom", "Prénom"),
+                          textInput("email", "Email"),
+                          textInput("numero", tags$span("Téléphone", tags$span("*", style = "color: red;"))),
+                          selectInput("pays", "Pays", choices = unique(donnees_geographiques$pays)),
+                          selectInput("ville", "Ville", choices = NULL),
+                          textInput("quartier", "Quartier", placeholder = "Quartier"),
+                          textAreaInput("adresse_livraison", "Adresse", placeholder = "Adresse complète de livraison...", rows = 3),
+                          textAreaInput("preferences", "Préférences", placeholder = "Préférences particulières...", rows = 3),
+                          actionButton("submit", "Enregistrer", class = "btn-primary", icon = icon("save"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("edit"), "Modification", style = "color: #f39c12;"),
+                          textInput("edit_id", "ID Client", placeholder = "Saisir l'ID..."),
+                          actionButton("edit", "Modifier", class = "btn-warning", icon = icon("edit"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("trash"), "Suppression", style = "color: #e74c3c;"),
+                          textInput("delete_id", "ID Client", placeholder = "Saisir l'ID..."),
+                          actionButton("delete", "Supprimer", class = "btn-danger", icon = icon("trash-alt"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("file-export"), "Export", style = "color: #27ae60;"),
+                          downloadButton("export", "Excel", class = "btn-success", icon = icon("file-excel"))
+                 )
+               ),
+               mainPanel(
+                 width = 8,
+                 DTOutput("table_clients") %>% withSpinner(type = 6, color = "#3498db", hide.ui = FALSE),
+                 tags$hr(),
+                 tags$div(style = "font-size: 0.9em; color: #7f8c8d;",
+                          icon("info-circle"), "Nombre total de clients :", textOutput("total_clients", inline = TRUE)
+                 )
+               )
+             )
+    ),
+    
+#### Onglet 2 : Gestion Produits ####
+
+tabPanel("Gestion Produits",
+         titlePanel(
+           tags$div(
+             icon("shopping-cart", class = "fa-2x"),
+             "Gestion des Produits",
+             style = "display: flex; align-items: center; gap: 15px; color: #2c3e50;"
+           )
+         ),
+         sidebarLayout(
+           sidebarPanel(
+             width = 4,
+             tags$div(class = "well",
+                      h4(icon("plus-circle"), "Nouveau Produit", style = "color: #3498db;"),
+                      textInput("nom_produit", tags$span("Nom du produit", tags$span("*", style = "color: red;"))),
+                      selectInput("fournisseur_id", tags$span("ID Fournisseur", tags$span("*", style = "color: red;")), choices = NULL),
+                      fileInput("photo", "Photo (PNG/JPG)", accept = c("image/png", "image/jpeg")),
+                      selectInput("categorie", "Catégorie", choices = c("Savon solide", "Savon liquide", "Gel douche", "Savon en poudre")),
+                      textAreaInput("description", "Description", rows = 3),
+                      selectInput("couleur", "Couleur", choices = c("Rouge","Bleu","Vert","Jaune","Noir","Blanc","Gris","Orange","Violet","Rose")),
+                      numericInput("prix_achat", "Prix d'achat", value = 0, min = 0, step = 0.01),
+                      textInput("marque", "Marque"),
+                      numericInput("volume", "Volume (ml)", value = 100, min = 0),
+                      numericInput("poids", "Poids (g)", value = 100, min = 0),
+                      textInput("materiau", "Matériau"),
+                      actionButton("submit_produit", "Enregistrer", class = "btn-primary", icon = icon("save"))
+             ),
+             tags$div(class = "well",
+                      h4(icon("trash"), "Suppression", style = "color: #e74c3c;"),
+                      textInput("delete_id_produit", "ID Produit", placeholder = "PROD-001"),
+                      actionButton("delete_btn", "Supprimer", class = "btn-danger", icon = icon("trash-alt"))
+             ),
+             tags$div(class = "well",
+                      h4(icon("file-export"), "Export", style = "color: #27ae60;"),
+                      downloadButton("export_produits_excel", "Excel", class = "btn-success", icon = icon("file-excel")),
+                      downloadButton("export_produits_csv", "CSV", class = "btn-secondary", icon = icon("file-csv"))
+             )
+           ),
+           mainPanel(
+             width = 8,
+             DTOutput("table_produits") %>% withSpinner(type = 6, color = "#3498db"),
+             tags$hr()
+           )
+         )
+)
+,
+    
+#### Onglet 3 : Gestion Fournisseurs ####
+
+    tabPanel("Gestion Fournisseurs",
+             titlePanel(
+               tags$div(
+                 icon("truck", class = "fa-2x"),
+                 "Gestion Fournisseurs",
+                 style = "display: flex; align-items: center; gap: 15px; color: #2c3e50;"
+               )
+             ),
+             sidebarLayout(
+               sidebarPanel(
+                 width = 4,
+                 tags$div(class = "well",
+                          h4(icon("plus-circle"), "Nouveau Fournisseur", style = "color: #3498db;"),
+                          textInput("fournisseur_nom", 
+                                    tags$span("Nom Fournisseur", tags$span("*", style = "color: red;")),
+                                    placeholder = "ABC Entreprise"),
+                          textInput("fournisseur_email",
+                                    tags$span("Email", tags$span("*", style = "color: red;")),
+                                    placeholder = "contact@abc.com"),
+                          textInput("fournisseur_telephone",
+                                    tags$span("Téléphone", tags$span("*", style = "color: red;")),
+                                    placeholder = "+225 07 12 34 56 78"),
+                          selectInput("fournisseur_pays", "Pays", choices = unique(donnees_geographiques$pays)),
+                          selectInput("fournisseur_type", "Type", choices = c("Local", "International")),
+                          textInput("fournisseur_adresse", "Adresse", placeholder = "Rue 123, Ville"),
+                          textInput("fournisseur_site", "Site Web", placeholder = "https://www.abc.com"),
+                          textInput("fournisseur_responsable", "Nom Responsable"),
+                          textInput("fournisseur_contact", "Contact Responsable"),
+                          selectInput("fournisseur_statut", "Statut", choices = c("Actif", "Inactif")),
+                          actionButton("submit_fournisseur", "Enregistrer", class = "btn-primary", icon = icon("save"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("edit"), "Modification", style = "color: #f39c12;"),
+                          textInput("edit_fournisseur_id", "ID Fournisseur", placeholder = "ID-12345"),
+                          actionButton("edit_fournisseur", "Modifier", class = "btn-warning", icon = icon("edit"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("trash"), "Suppression", style = "color: #e74c3c;"),
+                          textInput("delete_fournisseur_id", "ID Fournisseur", placeholder = "ID-12345"),
+                          actionButton("delete_fournisseur", "Supprimer", class = "btn-danger", icon = icon("trash-alt"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("file-export"), "Export", style = "color: #27ae60;"),
+                          downloadButton("export_fournisseur", "Excel", class = "btn-success", icon = icon("file-excel"))
+                 )
+               ),
+               mainPanel(
+                 width = 8,
+                 DTOutput("table_fournisseurs") %>% withSpinner(type = 6, color = "#3498db"),
+                 tags$hr(),
+                 tags$div(style = "font-size: 0.9em; color: #7f8c8d;",
+                          icon("box"), "Fournisseurs actifs : ", textOutput("total_actifs", inline = TRUE),
+                          tags$br(),
+                          icon("archive"), "Fournisseurs inactifs : ", textOutput("total_inactifs", inline = TRUE)
+                 )
+               )
+             )
+    ),
+    
+#### Onglet 4 : Gestion Commerciaux ####
+
+    tabPanel("Gestion Commerciaux",
+             titlePanel(
+               tags$div(
+                 icon("users", class = "fa-2x"),
+                 "Gestion Commerciaux",
+                 style = "display: flex; align-items: center; gap: 15px; color: #2c3e50;"
+               )
+             ),
+             sidebarLayout(
+               sidebarPanel(
+                 width = 4,
+                 tags$div(class = "well",
+                          h4(icon("user-plus"), "Nouveau Commercial", style = "color: #3498db;"),
+                          textInput("commerciaux_nom", tags$span("Nom", tags$span("*", style = "color: red;")), 
+                                    placeholder = "Nom complet"),
+                          selectInput("commerciaux_genre", tags$span("Genre", tags$span("*", style = "color: red;")), 
+                                      choices = c("Masculin", "Féminin", "Autre")),
+                          textInput("commerciaux_adresse", tags$span("Adresse", tags$span("*", style = "color: red;")), 
+                                    placeholder = "Adresse complète"),
+                          textInput("commerciaux_tel", tags$span("Téléphone", tags$span("*", style = "color: red;")), 
+                                    placeholder = "Ex: +255 07 ..."),
+                          actionButton("commerciaux_submit", "Enregistrer", class = "btn-primary", icon = icon("save"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("edit"), "Modification", style = "color: #f39c12;"),
+                          textInput("commerciaux_edit_id", "ID Commercial", placeholder = "Saisir l'ID..."),
+                          actionButton("commerciaux_edit", "Modifier", class = "btn-warning", icon = icon("edit"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("trash"), "Suppression", style = "color: #e74c3c;"),
+                          textInput("commerciaux_delete_id", "ID Commercial", placeholder = "Saisir l'ID..."),
+                          actionButton("commerciaux_delete", "Supprimer", class = "btn-danger", icon = icon("trash-alt"))
+                 ),
+                 tags$div(class = "well",
+                          h4(icon("file-export"), "Export", style = "color: #27ae60;"),
+                          downloadButton("export_commerciaux", "Excel", class = "btn-success", icon = icon("file-excel"))
+                 )
+               ),
+               mainPanel(
+                 width = 8,
+                 DTOutput("table_commerciaux") %>% withSpinner(type = 6, color = "#3498db", hide.ui = FALSE),
+                 tags$hr(),
+                 tags$div(style = "font-size: 0.9em; color: #7f8c8d;",
+                          icon("info-circle"), "Nombre total de commerciaux :", textOutput("total_commerciaux", inline = TRUE))
+               )
+             )
+    ),
+
+
+#### Onglet 5 : Gestion Stock ####
+
+tabPanel("Gestion Stock",
+         titlePanel(
+           tags$div(
+             icon("warehouse", class = "fa-2x"),
+             "Gestion des Stocks",
+             style = "display: flex; align-items: center; gap: 15px; color: #2c3e50;"
+           )
+         ),
+         sidebarLayout(
+           sidebarPanel(
+             width = 4,
+             tags$div(class = "well",
+                      h4(icon("plus-circle"), "Mouvement de Stock", style = "color: #3498db;"),
+                      selectInput("stock_product", "Produit", choices = NULL),
+                      selectInput("stock_depot", "Entrepôt", choices = NULL),
+                      selectInput("stock_movement", "Type de mouvement", choices = c("Livraison", "sortir")),
+                      numericInput("stock_qty", "Quantité", value = 0, min = 0),
+                      dateInput("stock_date", "Date du mouvement", value = Sys.Date()),
+                      numericInput("stock_prix", "Prix d'achat", value = 0, min = 0, step = 0.01),
+                      actionButton("submit_stock", "Enregistrer le mouvement", class = "btn-primary", icon = icon("save"))
+             ),
+             tags$div(class = "well",
+                      h4(icon("exchange-alt"), "Transfert entre entrepôts", style = "color: #3498db;"),
+                      selectInput("transfer_product", "Produit", choices = NULL),
+                      selectInput("transfer_from",   "Depuis", choices = NULL),
+                      selectInput("transfer_to",     "Vers",   choices = NULL),
+                      numericInput("transfer_qty", "Quantité", value = 0, min = 0),
+                      actionButton("submit_transfer", "Transférer", class = "btn-warning", icon = icon("exchange-alt"))
+             )
+           ),
+           mainPanel(
+             width = 8,
+             selectInput("stock_history_product", "Filtrer par produit", choices = NULL),
+             DTOutput("table_stock") %>% withSpinner(type = 6, color = "#3498db"),
+             tags$hr())
+         )
+),
+
+
+
+### Onglet 6 : l'onglet Entrepôts ---#####
+
+tabPanel("Gestion Entrepôts",
+         titlePanel(
+           tags$div(
+             icon("warehouse", class = "fa-2x"),
+             "Gestion des Entrepôts",
+             style = "display: flex; align-items: center; gap: 15px; color: #2c3e50;"
+           )
+         ),
+         sidebarLayout(
+           sidebarPanel(
+             width = 4,
+             tags$div(class = "well",
+                      h4(icon("plus-circle"), "Nouveau Entrepôt", style = "color: #3498db;"),
+                      textInput("entrepot_nom", "Nom de l'entrepôt"),
+                      textInput("entrepot_responsable", "Nom du responsable"),
+                      textInput("entrepot_tel", "Téléphone"),
+                      textInput("entrepot_adresse", "Adresse"),
+                      actionButton("submit_entrepot", "Enregistrer", class = "btn-primary", icon = icon("save"))
+             ),
+             
+             tags$div(class = "well",
+                      h4(icon("edit"), "Modification Entrepôt", style = "color: #f39c12;"),
+                      textInput("edit_entrepot_id", "ID Entrepôt", placeholder = "ENT-001"),
+                      actionButton("edit_entrepot", "Modifier", class = "btn-warning", icon = icon("edit"))
+             ),
+            
+             tags$div(class = "well",
+                      h4(icon("trash"), "Suppression Entrepôt", style = "color: #e74c3c;"),
+                      textInput("delete_entrepot_id", "ID Entrepôt", placeholder = "ENT-001"),
+                      actionButton("delete_entrepot", "Supprimer", class = "btn-danger", icon = icon("trash-alt"))
+             )
+             
+             
+             
+           ),
+           mainPanel(
+             width = 8,
+             DTOutput("table_entrepots") %>% withSpinner(type = 6, color = "#3498db")
+           )
+         )
+)
+
+
+,
+    
+#### Onglet 7 : Gestion Ventes ####
+
+    tabPanel("Gestion Ventes",
+             titlePanel(
+               tags$div(
+                 icon("shopping-bag", class = "fa-2x"),
+                 "Gestion des Ventes",
+                 style = "display: flex; align-items: center; gap: 15px; color: #2c3e50;"
+               )
+             ),
+             sidebarLayout(
+               sidebarPanel(
+                 width = 4,
+                 tags$div(class = "well",
+                          h4(icon("plus-circle"), "Nouvelle Vente", style = "color: #3498db;"),
+                          # Sélection du client et affichage de ses informations
+                          selectInput("id_client", "ID Client", choices = NULL),
+                          textInput("client_nom", "Nom Client", value = "", placeholder = "Nom"),
+                          textInput("client_tel", "Téléphone", value = "", placeholder = "Téléphone"),
+                          textInput("client_adresse", "Adresse Client", value = "", placeholder = "Adresse"),
+                          selectInput("vente_entrepot", "Entrepôt", choices = NULL),
+                          
+                          # Sélection du produit et affichage de son nom
+                          selectInput("id_produit", "ID Produit", choices = NULL),
+                          textInput("produit_nom", "Nom Produit", value = "", placeholder = "Nom Produit"),
+                          
+                          # Sélection du commerciale
+                          
+                          selectInput(
+                            "id_commercial", 
+                            "Commercial (ID - Nom)", 
+                            choices = NULL)
+                          ,
+                          
+                          
+                          
+                          # Nouveau champ pour le Prix Vente (initialisé sur le prix d'achat)
+                          numericInput(
+                            "prix_vente", 
+                            "Prix Vente (unitaire)", 
+                            value = 0, 
+                            min = 0
+                          ),
+                          
+                          # Champs relatifs à la vente
+                          selectInput("canal", "Canal de Vente", choices = c("PUB", "commercial", "recommandation")),
+                          numericInput("quantite_vente", "Quantité", value = 1, min = 1),
+                          numericInput("remise", "Remise (%)", value = 0, min = 0, max = 100),
+                          textAreaInput("commentaire", "Commentaire", rows = 3),
+                          selectInput("moy_livraison", "Moyen de Paiement", choices = c("ORANGE MONAY","MTN MONAY","MOOV MONAY","WAVE","LIQUIDE","CARTE BANCAIRE", "AUTRE")),
+                          
+                          # Affichage du montant total calculé
+                          h4(textOutput("montant_total_display"), style = "color: #e74c3c; font-weight: bold;"),
+                          br(),
+                          actionButton(
+                            "submit_vente", 
+                            "Enregistrer Vente", 
+                            class = "btn-primary", 
+                            icon = icon("save"), 
+                            disabled = "disabled"
+                          )
+                 ),
+                 
+                 tags$div(class = "well",
+                          h4(icon("edit"), "Modification Vente", style = "color: #f39c12;"),
+                          textInput("edit_vente_id", "ID Vente", placeholder = "VENTE-001"),
+                          actionButton("edit_vente_btn", "Modifier Vente", class = "btn-warning", icon = icon("edit"))
+                 ),
+                 
+                 tags$div(class = "well",
+                          h4(icon("trash"), "Suppression Vente", style = "color: #e74c3c;"),
+                          textInput("delete_vente_id", "ID Vente", placeholder = "VENTE-001"),
+                          actionButton("delete_vente_btn", "Supprimer Vente", class = "btn-danger", icon = icon("trash-alt"))
+                 ),
+                 
+                 tags$div(class = "well",
+                          h4(icon("file-export"), "Export", style = "color: #27ae60;"),
+                          downloadButton("export_vente_btn", "Excel", class = "btn-success", icon = icon("file-excel"))
+                 )
+               ),
+               
+               mainPanel(
+                 width = 8,
+                 DTOutput("table_ventes") %>% withSpinner(type = 6, color = "#3498db")
+               )
+             ),
+             tags$head(
+               tags$style(HTML("
+                 .well { padding: 15px; margin-bottom: 20px; }
+                 .btn { width: 100%; margin-top: 10px; }
+                 .selectize-input { height: 40px; }
+                 .shiny-spinner-container { margin-top: 50px; }
+               "))
+             )
+    )
+  )
+)
+
+######## Serveur ########
+
+server <- function(input, output, session) {
+  
+  ##### MODULE GESTION CLIENTS #####
+  # Mise à jour des villes selon le pays sélectionné
+  observe({
+    req(input$pays)
+    villes <- donnees_geographiques %>% 
+      filter(pays == input$pays) %>% 
+      pull(ville) %>% 
+      unique()
+    updateSelectInput(session, "ville", choices = villes)
+  })
+  
+  # Notification personnalisée pour les clients
+  myNotification <- function(msg, type = "message") {
+    notif_type <- switch(type,
+                         "message" = "success",
+                         "warning" = "warning",
+                         "error" = "error")
+    shinyalert(
+      title = "",
+      text = msg,
+      type = notif_type,
+      timer = 3000,
+      animation = "slide-from-top",
+      closeOnClickOutside = TRUE
+    )
+  }
+  
+  # Base de données clients
+  clients <- reactiveVal({
+    if (file.exists("questionnaire_clients.csv")) {
+      read_csv("questionnaire_clients.csv", locale = locale(encoding = "UTF-8"))
+    } else {
+      data.frame(
+        customer_id = character(),
+        name = character(),
+        prenom = character(),
+        email = character(),
+        numero = character(),
+        pays = character(),
+        ville = character(),
+        quartier = character(),
+        adresse_livraison = character(),
+        preferences = character(),
+        date_enregistrement = as.Date(character()),
+        stringsAsFactors = FALSE
+      )
+    }
+  })
+  
+  # Ajout d'un client
+  observeEvent(input$submit, {
+    tryCatch({
+      req(input$name, input$numero)
+      if (nzchar(input$email) && !grepl("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", input$email)) {
+        stop("L'adresse e-mail n'est pas valide.")
+      }
+      new_id <- paste0(sample(c(0:9, LETTERS), 7, replace = TRUE), collapse = "")
+      new_entry <- data.frame(
+        customer_id = new_id,
+        name = input$name,
+        prenom= input$prenom,
+        email = input$email,
+        numero = input$numero,
+        pays = input$pays,
+        ville = input$ville,
+        quartier = input$quartier,
+        adresse_livraison = input$adresse_livraison,
+        preferences = input$preferences,
+        date_enregistrement = Sys.Date(),
+        stringsAsFactors = FALSE
+      )
+      
+      if (file.exists("questionnaire_clients.csv")) {
+        anciens_clients <- read_csv("questionnaire_clients.csv", locale = locale(encoding = "UTF-8"))
+        updated_clients <- bind_rows(anciens_clients, new_entry)
+        write_csv(updated_clients, "questionnaire_clients.csv")
+      } else {
+        write_csv(new_entry, "questionnaire_clients.csv")
+      }
+      
+      clients(rbind(clients(), new_entry))
+      myNotification("Client ajouté avec succès !", type = "message")
+      
+      # Réinitialisation des champs
+      updateTextInput(session, "name", value = "")
+      updateTextInput(session, "email", value = "")
+      updateTextInput(session, "numero", value = "")
+      updateTextInput(session, "quartier", value = "")
+      updateTextAreaInput(session, "adresse_livraison", value = "")
+      updateTextAreaInput(session, "preferences", value = "")
+    }, error = function(e) {
+      myNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # Modification d'un client
+  observeEvent(input$edit, {
+    req(input$edit_id)
+    client_to_edit <- clients() %>% filter(customer_id == input$edit_id)
+    if (nrow(client_to_edit) == 0) {
+      myNotification("Client non trouvé.", type = "error")
+      return()
+    }
+    showModal(modalDialog(
+      title = "Modifier Client",
+      textInput("edit_name", "Nom", value = client_to_edit$name),
+      textInput("edit_prenom", "Prénom", value = client_to_edit$prenom),
+      textInput("edit_email", "Email", value = client_to_edit$email),
+      textInput("edit_numero", "Numéro", value = client_to_edit$numero),
+      selectInput("edit_pays", "Pays", choices = unique(donnees_geographiques$pays), selected = client_to_edit$pays),
+      selectInput("edit_ville", "Ville", choices = {
+        villes_edit <- donnees_geographiques %>% 
+          filter(pays == client_to_edit$pays) %>% 
+          pull(ville) %>% 
+          unique()
+        villes_edit
+      }, selected = client_to_edit$ville),
+      textInput("edit_quartier", "Quartier", value = client_to_edit$quartier),
+      textAreaInput("edit_adresse_livraison", "Adresse de livraison", value = client_to_edit$adresse_livraison),
+      textAreaInput("edit_preferences", "Préférences", value = client_to_edit$preferences),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_edit_client", "Confirmer")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_edit_client, {
+    req(input$edit_id)
+    updated_data <- clients()
+    updated_data[updated_data$customer_id == input$edit_id, ] <- data.frame(
+      customer_id = input$edit_id,
+      name = input$edit_name,
+      prenom = input$edit_prenom,
+      email = input$edit_email,
+      numero = input$edit_numero,
+      pays = input$edit_pays,
+      ville = input$edit_ville,
+      quartier = input$edit_quartier,
+      adresse_livraison = input$edit_adresse_livraison,
+      preferences = input$edit_preferences,
+      date_enregistrement = Sys.Date(),
+      stringsAsFactors = FALSE
+    )
+    clients(updated_data)
+    write_csv(updated_data, "questionnaire_clients.csv")
+    removeModal()
+    myNotification("Client modifié avec succès !", type = "message")
+  })
+  
+  # Suppression d'un client
+  observeEvent(input$delete, {
+    req(input$delete_id)
+    showModal(modalDialog(
+      title = "Confirmation de suppression",
+      paste("Êtes-vous sûr de vouloir supprimer le client avec l'ID", input$delete_id, "?"),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_delete", "Supprimer")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_delete, {
+    req(input$delete_id)
+    updated_data <- clients() %>% filter(customer_id != input$delete_id)
+    clients(updated_data)
+    write_csv(updated_data, "questionnaire_clients.csv")
+    removeModal()
+    myNotification("Client supprimé avec succès !", type = "message")
+  })
+  
+  # Export des clients
+  output$export <- downloadHandler(
+    filename = function() {
+      paste("clients-", Sys.Date(), ".xlsx", sep = "")
+    },
+    content = function(file) {
+      write.xlsx(clients(), file)
+    }
+  )
+  
+  # Affichage du tableau clients
+  output$table_clients <- renderDT({
+    datatable(clients(), options = list(searching = TRUE, paging = TRUE, pageLength = 10))
+  })
+  
+  output$total_clients <- renderText({
+    nrow(clients())
+  })
+  
+  ##### MODULE GESTION PRODUITS #####
+
+  # 1) Chargement des fournisseurs pour sélecteur
+  suppliers <- reactive({
+    if (file.exists("fournisseurs.csv")) read_csv("fournisseurs.csv", col_types = cols(.default = "c"))
+    else tibble(supplier_id = character())
+  })
+  observe({
+    updateSelectInput(session, "fournisseur_id", choices = suppliers()$supplier_id)
+  })
+  
+  # 2) Table produits
+  data_produits <- reactiveVal({
+    if (file.exists("produits.csv")) read_csv("produits.csv")
+    else tibble(
+      product_id  = character(),
+      supplier_id = character(),
+      nom_produit = character(),
+      categorie   = character(),
+      description = character(),
+      couleur     = character(),
+      prix_achat  = numeric(),
+      marque      = character(),
+      volume      = numeric(),
+      poids       = numeric(),
+      materiau    = character(),
+      date_ajout  = as.Date(character()),
+      image       = character()
+    )
+  })
+  
+  # 3) ID auto-incrémenté
+  next_product_id <- reactive({
+    ids <- data_produits()$product_id
+    if (length(ids)==0) return("PROD-001")
+    nmax <- max(as.numeric(gsub("PROD-", "", ids)))
+    sprintf("PROD-%03d", nmax+1)
+  })
+  
+  # 4) Validation du prix
+  validate_prix <- function(val) {
+    if (val <= 0) stop("Le prix d'achat doit être strictement positif.")
+  }
+  
+  # 5) Ajout d'un produit
+  observeEvent(input$submit_produit, {
+    tryCatch({
+      req(input$nom_produit, input$fournisseur_id, input$prix_achat)
+      validate_prix(input$prix_achat)
+      # Gestion de l'image
+      image_path <- NA_character_
+      if (!is.null(input$photo) && nzchar(input$photo$name)) {
+        dir.create(file.path("www","images"), showWarnings = FALSE, recursive = TRUE)
+        ext <- tools::file_ext(input$photo$name)
+        fname <- paste0(next_product_id(), ".", ext)
+        file.copy(input$photo$datapath, file.path("www","images", fname))
+        image_path <- file.path("images", fname)
+      }
+      # Nouveau produit
+      new_p <- tibble(
+        product_id  = next_product_id(),
+        supplier_id = input$fournisseur_id,
+        nom_produit = input$nom_produit,
+        categorie   = input$categorie,
+        description = input$description,
+        couleur     = input$couleur,
+        prix_achat  = input$prix_achat,
+        marque      = input$marque,
+        volume      = input$volume,
+        poids       = input$poids,
+        materiau    = input$materiau,
+        date_ajout  = Sys.Date(),
+        image       = image_path
+      )
+      updated <- bind_rows(data_produits(), new_p)
+      write_csv(updated, "produits.csv")
+      data_produits(updated)
+      showNotification("Produit ajouté avec succès !", type = "message")
+      # Reset champs
+      updateTextInput(session, "nom_produit", value = "")
+      updateSelectInput(session, "fournisseur_id", selected = NULL)
+      reset("photo")
+      updateTextAreaInput(session, "description", value = "")
+      updateNumericInput(session, "prix_achat", value = 0)
+      updateTextInput(session, "marque", value = "")
+      updateNumericInput(session, "volume", value = 100)
+      updateNumericInput(session, "poids", value = 100)
+      updateTextInput(session, "materiau", value = "")
+    }, error = function(e) {
+      showNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # 6) Suppression d'un produit
+  observeEvent(input$delete_btn, {
+    req(input$delete_id_produit)
+    showModal(modalDialog(
+      title = "Confirmer suppression",
+      paste("Supprimer le produit", input$delete_id_produit, "?"),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_delete", "Supprimer", class = "btn-danger")
+      )
+    ))
+  })
+  observeEvent(input$confirm_delete, {
+    updated <- data_produits() %>% filter(product_id != input$delete_id_produit)
+    write_csv(updated, "produits.csv")
+    data_produits(updated)
+    removeModal()
+    showNotification("Produit supprimé.", type = "message")
+  })
+  
+  # 7) Affichage du tableau produits
+  output$table_produits <- renderDT({
+    df <- data_produits() %>% select(
+      image, product_id, supplier_id, nom_produit, categorie, description,
+      couleur, prix_achat, marque, volume, poids, materiau, date_ajout
+    ) %>% mutate(
+      image = ifelse(is.na(image)|image=="", "Pas d'image",
+                     paste0('<img src="',image,'" style="max-height:100px;">'))
+    )
+    datatable(
+      df,
+      escape = FALSE,
+      options = list(scrollX = TRUE, pageLength = 10),
+      colnames = c(
+        "Image","ID Produit","ID Fournisseur","Nom du Produit","Catégorie",
+        "Description","Couleur","Prix d'achat","Marque","Volume (ml)",
+        "Poids (g)","Matériau","Date d'ajout"
+      )
+    )
+  })
+  
+  # 8) Exports
+  output$export_produits_excel <- downloadHandler(
+    filename = function() paste0("produits_",Sys.Date(),".xlsx"),
+    content = function(file) write.xlsx(data_produits(), file)
+  )
+  output$export_produits_csv <- downloadHandler(
+    filename = function() paste0("produits_",Sys.Date(),".csv"),
+    content = function(file) write_csv(data_produits(), file)
+  )
+  
+  
+  ##### MODULE GESTION FOURNISSEURS #####
+  fournisseurs <- reactiveVal({
+    if(file.exists("fournisseurs.csv")) {
+      read_csv("fournisseurs.csv", col_types = cols(.default = "c"))
+    } else {
+      tibble(
+        supplier_id = character(),
+        fournisseur_nom = character(),
+        fournisseur_email = character(),
+        fournisseur_telephone = character(),
+        fournisseur_pays = character(),
+        fournisseur_type = character(),
+        fournisseur_adresse = character(),
+        fournisseur_site = character(),
+        fournisseur_responsable = character(),
+        fournisseur_contact = character(),
+        fournisseur_statut = character(),
+        date_creation = character()
+      )
+    }
+  })
+  
+  # Enregistrement d'un nouveau fournisseur
+  observeEvent(input$submit_fournisseur, {
+    tryCatch({
+      req(input$fournisseur_nom, input$fournisseur_email, input$fournisseur_telephone)
+      
+      new_entry <- tibble(
+        supplier_id = paste0("FOUR-", format(Sys.time(), "%Y%m%d-%H%M%S")),
+        fournisseur_nom = input$fournisseur_nom,
+        fournisseur_email = input$fournisseur_email,
+        fournisseur_telephone = input$fournisseur_telephone,
+        fournisseur_pays = input$fournisseur_pays,
+        fournisseur_type = input$fournisseur_type,
+        fournisseur_adresse = input$fournisseur_adresse,
+        fournisseur_site = input$fournisseur_site,
+        fournisseur_responsable = input$fournisseur_responsable,
+        fournisseur_contact = input$fournisseur_contact,
+        fournisseur_statut = input$fournisseur_statut,
+        date_creation = format(Sys.Date(), "%d/%m/%Y")
+      )
+      
+      if(nrow(fournisseurs()) == 0) {
+        write_csv(new_entry, "fournisseurs.csv")
+      } else {
+        write_csv(new_entry, "fournisseurs.csv", append = TRUE)
+      }
+      
+      fournisseurs(bind_rows(fournisseurs(), new_entry))
+      showNotification("Fournisseur enregistré avec succès !", type = "message")
+      
+      # Réinitialisation des champs
+      purrr::walk(
+        c("fournisseur_nom", "fournisseur_email", "fournisseur_telephone", "fournisseur_adresse", 
+          "fournisseur_site", "fournisseur_responsable", "fournisseur_contact"),
+        ~ updateTextInput(session, .x, value = "")
+      )
+      
+    }, error = function(e) {
+      showNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # Modification d'un fournisseur
+  observeEvent(input$edit_fournisseur, {
+    req(input$edit_fournisseur_id)
+    fournisseur_row <- fournisseurs() %>% filter(supplier_id == input$edit_fournisseur_id)
+    
+    if(nrow(fournisseur_row) == 0) {
+      showNotification("Fournisseur introuvable", type = "error")
+      return()
+    }
+    
+    showModal(modalDialog(
+      title = "Modification fournisseur",
+      textInput("edit_fournisseur_nom", "Nom", value = fournisseur_row$fournisseur_nom),
+      textInput("edit_fournisseur_email", "Email", value = fournisseur_row$fournisseur_email),
+      textInput("edit_fournisseur_tel", "Téléphone", value = fournisseur_row$fournisseur_telephone),
+      selectInput("edit_fournisseur_pays", "Pays", selected = fournisseur_row$fournisseur_pays,
+                  choices = unique(donnees_geographiques$pays)),
+      selectInput("edit_fournisseur_type", "Type", selected = fournisseur_row$fournisseur_type,
+                  choices = c("Local", "International")),
+      textInput("edit_fournisseur_adresse", "Adresse", value = fournisseur_row$fournisseur_adresse),
+      textInput("edit_fournisseur_site", "Site web", value = fournisseur_row$fournisseur_site),
+      textInput("edit_fournisseur_resp_nom", "Responsable", value = fournisseur_row$fournisseur_responsable),
+      textInput("edit_fournisseur_resp_contact", "Contact responsable", value = fournisseur_row$fournisseur_contact),
+      selectInput("edit_fournisseur_statut", "Statut", selected = fournisseur_row$fournisseur_statut,
+                  choices = c("Actif", "Inactif")),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_edit_fournisseur", "Sauvegarder", class = "btn-primary")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_edit_fournisseur, {
+    updated_data <- fournisseurs()
+    idx <- which(updated_data$supplier_id == input$edit_fournisseur_id)
+    
+    updated_data[idx,] <- tibble(
+      supplier_id = input$edit_fournisseur_id,
+      fournisseur_nom = input$edit_fournisseur_nom,
+      fournisseur_email = input$edit_fournisseur_email,
+      fournisseur_telephone = input$edit_fournisseur_tel,
+      fournisseur_pays = input$edit_fournisseur_pays,
+      fournisseur_type = input$edit_fournisseur_type,
+      fournisseur_adresse = input$edit_fournisseur_adresse,
+      fournisseur_site = input$edit_fournisseur_site,
+      fournisseur_responsable = input$edit_fournisseur_resp_nom,
+      fournisseur_contact = input$edit_fournisseur_resp_contact,
+      fournisseur_statut = input$edit_fournisseur_statut,
+      date_creation = updated_data$date_creation[idx]
+    )
+    
+    fournisseurs(updated_data)
+    write_csv(updated_data, "fournisseurs.csv")
+    removeModal()
+    showNotification("Modification réussie !", type = "message")
+  })
+  
+  # Suppression d'un fournisseur
+  observeEvent(input$delete_fournisseur, {
+    req(input$delete_fournisseur_id)
+    showModal(modalDialog(
+      title = "Confirmation de suppression",
+      paste("Voulez-vous vraiment supprimer le fournisseur", input$delete_fournisseur_id, "?"),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_delete_fournisseur", "Supprimer", class = "btn-danger")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_delete_fournisseur, {
+    new_data <- fournisseurs() %>% filter(supplier_id != input$delete_fournisseur_id)
+    fournisseurs(new_data)
+    write_csv(new_data, "fournisseurs.csv")
+    removeModal()
+    showNotification("Fournisseur supprimé", type = "message")
+  })
+  
+  # Export des fournisseurs
+  output$export_fournisseur <- downloadHandler(
+    filename = function() {
+      paste("fournisseurs-", Sys.Date(), ".xlsx", sep = "")
+    },
+    content = function(file) {
+      write.xlsx(fournisseurs(), file)
+    }
+  )
+  
+  # Affichage du tableau fournisseurs
+  output$table_fournisseurs <- renderDT({
+    datatable(
+      fournisseurs() %>% select(-date_creation),
+      options = list(
+        scrollX = TRUE,
+        language = list(url = '//cdn.datatables.net/plug-ins/1.10.21/i18n/French.json'),
+        columnDefs = list(
+          list(targets = 0, visible = TRUE)
+        )
+      ),
+      rownames = FALSE
+    )
+  })
+  
+  output$total_actifs <- renderText({
+    fournisseurs() %>% filter(fournisseur_statut == "Actif") %>% nrow()
+  })
+  
+  output$total_inactifs <- renderText({
+    fournisseurs() %>% filter(fournisseur_statut == "Inactif") %>% nrow()
+  })
+  
+  ##### MODULE GESTION COMMERCIAUX #####
+  output$total_commerciaux <- renderText({
+    nrow(commerciaux_data())
+  })
+  
+  commerciauxNotification <- function(msg, type = "message") {
+    notif_type <- switch(type,
+                         "message" = "success",
+                         "warning" = "warning",
+                         "error" = "error")
+    shinyalert::shinyalert(
+      title = "",
+      text = msg,
+      type = notif_type,
+      timer = 3000,
+      animation = "slide-from-top",
+      closeOnClickOutside = TRUE
+    )
+  }
+  
+  commerciaux_data <- reactiveVal({
+    if (file.exists("commerciaux.csv")) {
+      read_csv("commerciaux.csv", locale = locale(encoding = "UTF-8"))
+    } else {
+      data.frame(
+        id_commercial = character(),
+        nom = character(),
+        genre = character(),
+        adresse = character(),
+        tel = character(),
+        date_enregistrement = as.Date(character()),
+        stringsAsFactors = FALSE
+      )
+    }
+  })
+  
+  # Enregistrement d'un nouveau commercial
+  observeEvent(input$commerciaux_submit, {
+    tryCatch({
+      req(input$commerciaux_nom, input$commerciaux_genre, input$commerciaux_tel)
+      new_id <- paste0(sample(c(0:9, LETTERS), 7, replace = TRUE), collapse = "")
+      new_entry <- data.frame(
+        id_commercial = new_id,
+        nom = input$commerciaux_nom,
+        genre = input$commerciaux_genre,
+        adresse = input$commerciaux_adresse,
+        tel = input$commerciaux_tel,
+        date_enregistrement = Sys.Date(),
+        stringsAsFactors = FALSE
+      )
+      
+      if (file.exists("commerciaux.csv")) {
+        write_csv(new_entry, "commerciaux.csv", append = TRUE)
+      } else {
+        write_csv(new_entry, "commerciaux.csv")
+      }
+      
+      commerciaux_data(rbind(commerciaux_data(), new_entry))
+      commerciauxNotification("Commercial ajouté avec succès !", type = "message")
+      
+      # Réinitialisation des champs
+      updateTextInput(session, "commerciaux_nom", value = "")
+      updateSelectInput(session, "commerciaux_genre", selected = "Masculin")
+      updateTextInput(session, "commerciaux_adresse", value = "")
+      updateTextInput(session, "commerciaux_tel", value = "")
+    }, error = function(e) {
+      commerciauxNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # Modification d'un commercial
+  observeEvent(input$commerciaux_edit, {
+    req(input$commerciaux_edit_id)
+    commercial_to_edit <- commerciaux_data() %>% filter(id_commercial == input$commerciaux_edit_id)
+    if(nrow(commercial_to_edit) == 0){
+      commerciauxNotification("Commercial non trouvé.", type = "error")
+      return()
+    }
+    
+    showModal(modalDialog(
+      title = "Modifier Commercial",
+      textInput("commerciaux_edit_nom", "Nom", value = commercial_to_edit$nom[1]),
+      selectInput("commerciaux_edit_genre", "Genre", choices = c("Masculin", "Féminin", "Autre"), 
+                  selected = commercial_to_edit$genre[1]),
+      textInput("commerciaux_edit_adresse", "Adresse", value = commercial_to_edit$adresse[1]),
+      textInput("commerciaux_edit_tel", "Téléphone", value = commercial_to_edit$tel[1]),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("commerciaux_confirm_edit", "Confirmer")
+      )
+    ))
+  })
+  
+  observeEvent(input$commerciaux_confirm_edit, {
+    req(input$commerciaux_edit_id)
+    updated_data <- commerciaux_data()
+    idx <- which(updated_data$id_commercial == input$commerciaux_edit_id)
+    if(length(idx) == 0) {
+      commerciauxNotification("Erreur lors de la mise à jour : ID non trouvé.", type = "error")
+      return()
+    }
+    updated_data[idx, ] <- data.frame(
+      id_commercial = input$commerciaux_edit_id,
+      nom = input$commerciaux_edit_nom,
+      genre = input$commerciaux_edit_genre,
+      adresse = input$commerciaux_edit_adresse,
+      tel = input$commerciaux_edit_tel,
+      date_enregistrement = updated_data$date_enregistrement[idx],
+      stringsAsFactors = FALSE
+    )
+    commerciaux_data(updated_data)
+    write_csv(updated_data, "commerciaux.csv")
+    removeModal()
+    commerciauxNotification("Commercial modifié avec succès !", type = "message")
+  })
+  
+  # Suppression d'un commercial
+  observeEvent(input$commerciaux_delete, {
+    req(input$commerciaux_delete_id)
+    showModal(modalDialog(
+      title = "Confirmation de suppression",
+      paste("Êtes-vous sûr de vouloir supprimer le commercial avec l'ID", input$commerciaux_delete_id, "?"),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("commerciaux_confirm_delete", "Supprimer")
+      )
+    ))
+  })
+  
+  observeEvent(input$commerciaux_confirm_delete, {
+    req(input$commerciaux_delete_id)
+    updated_data <- commerciaux_data() %>% filter(id_commercial != input$commerciaux_delete_id)
+    commerciaux_data(updated_data)
+    write_csv(updated_data, "commerciaux.csv")
+    removeModal()
+    commerciauxNotification("Commercial supprimé avec succès !", type = "message")
+  })
+  
+  # Export des commerciaux
+  output$export_commerciaux <- downloadHandler(
+    filename = function(){
+      paste("commerciaux-", Sys.Date(), ".xlsx", sep = "")
+    },
+    content = function(file){
+      write.xlsx(commerciaux_data(), file)
+    }
+  )
+  
+  # Affichage du tableau commerciaux
+  output$table_commerciaux <- renderDT({
+    datatable(commerciaux_data(), options = list(
+      searching = TRUE,
+      paging = TRUE,
+      pageLength = 10
+    ))
+  })
+  
+##### gestion des entrepots   #####
+
+  
+  
+  
+  
+
+  
+entrepots <- reactiveVal({
+  if (file.exists("entrepots.csv")) {
+    read_csv("entrepots.csv", col_types = cols(
+      entrepot_id    = col_character(),
+      nom_entrepot   = col_character(),
+      responsable    = col_character(),
+      telephone      = col_character(),
+      adresse        = col_character()
+    ))
+  } else {
+    tibble(
+      entrepot_id    = character(),
+      nom_entrepot   = character(),
+      responsable    = character(),
+      telephone      = character(),
+      adresse        = character()
+    )
+  }
+})
+
+#### Enregistrement d'un nouvel entrepôt ####
+  
+observeEvent(input$submit_entrepot, {
+  req(input$entrepot_nom, input$entrepot_responsable, input$entrepot_tel, input$entrepot_adresse)
+  # Génération d'un ID unique (exemple: ENT-001, ENT-002, …)
+  
+  current <- entrepots()
+  new_id <- paste0("ENT-", sprintf("%03d", nrow(current) + 1))
+  new_entrepot <- tibble(
+    entrepot_id  = new_id,
+    nom_entrepot = input$entrepot_nom,
+    responsable  = input$entrepot_responsable,
+    telephone    = input$entrepot_tel,
+    adresse      = input$entrepot_adresse
+  )
+  updated <- bind_rows(current, new_entrepot)
+  entrepots(updated)
+  write_csv(updated, "entrepots.csv")
+  showNotification("Entrepôt ajouté avec succès !", type = "message")
+  updateTextInput(session, "entrepot_nom", value = "")
+  updateTextInput(session, "entrepot_responsable", value = "")
+  updateTextInput(session, "entrepot_tel", value = "")
+  updateTextInput(session, "entrepot_adresse", value = "")
+})
+
+  
+###MODIFICATION ENTREPOT####
+  
+  observeEvent(input$edit_entrepot, {
+    req(input$edit_entrepot_id)
+    
+    # Filtrer l'entrepôt correspondant à l'ID saisi
+    ent <- entrepots() %>% filter(entrepot_id == input$edit_entrepot_id)
+    
+    if(nrow(ent) == 0){
+      showNotification("Entrepôt non trouvé.", type = "error")
+      return()
+    }
+    
+    # Afficher une modale pré-remplie avec les informations de l'entrepôt
+    showModal(modalDialog(
+      title = "Modifier l'Entrepôt",
+      textInput("edit_entrepot_nom", "Nom de l'entrepôt", value = ent$nom_entrepot),
+      textInput("edit_entrepot_responsable", "Nom du responsable", value = ent$responsable),
+      textInput("edit_entrepot_tel", "Téléphone", value = ent$telephone),
+      textInput("edit_entrepot_adresse", "Adresse", value = ent$adresse),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_edit_entrepot", "Sauvegarder", class = "btn-primary")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_edit_entrepot, {
+    req(input$edit_entrepot_id)  # ID toujours le même
+    updated_entrepots <- entrepots()
+    idx <- which(updated_entrepots$entrepot_id == input$edit_entrepot_id)
+    
+    if(length(idx) == 0){
+      showNotification("Erreur : Entrepôt introuvable.", type = "error")
+      return()
+    }
+    
+    # Mise à jour des informations de l'entrepôt
+    updated_entrepots[idx, ] <- tibble(
+      entrepot_id  = input$edit_entrepot_id,
+      nom_entrepot = input$edit_entrepot_nom,
+      responsable  = input$edit_entrepot_responsable,
+      telephone    = input$edit_entrepot_tel,
+      adresse      = input$edit_entrepot_adresse
+    )
+    
+    entrepots(updated_entrepots)
+    write_csv(updated_entrepots, "entrepots.csv")
+    removeModal()
+    showNotification("Entrepôt modifié avec succès !", type = "message")
+  })
+  
+  
+  
+  
+  
+  
+### supression entrepot ####
+  observeEvent(input$delete_entrepot, {
+    req(input$delete_entrepot_id)
+    
+    # Vérifier l'existence de l'entrepôt
+    ent <- entrepots() %>% filter(entrepot_id == input$delete_entrepot_id)
+    
+    if(nrow(ent) == 0){
+      showNotification("Entrepôt non trouvé.", type = "error")
+      return()
+    }
+    
+    showModal(modalDialog(
+      title = "Confirmation de suppression",
+      paste("Voulez-vous vraiment supprimer l'entrepôt", input$delete_entrepot_id, "?"),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_delete_entrepot", "Supprimer", class = "btn-danger")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_delete_entrepot, {
+    req(input$delete_entrepot_id)
+    updated_entrepots <- entrepots() %>% filter(entrepot_id != input$delete_entrepot_id)
+    
+    entrepots(updated_entrepots)
+    write_csv(updated_entrepots, "entrepots.csv")
+    removeModal()
+    showNotification("Entrepôt supprimé avec succès !", type = "message")
+  })
+  
+  
+  
+  
+### Affichage dans le tableau ####
+output$table_entrepots <- renderDT({
+  datatable(entrepots(), options = list(searching = TRUE, paging = TRUE, pageLength = 10))
+})
+
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+##### MODULE GESTION VENTES #####
+  
+  
+  observe({
+    valid <- nzchar(input$id_client) &&
+      nzchar(input$id_produit) &&
+      nzchar(input$id_commercial) &&
+      input$quantite_vente > 0 &&
+      input$prix_vente > 0
+    if (valid) shinyjs::enable("submit_vente")
+    else     shinyjs::disable("submit_vente")
+  })
+  
+  
+  # 1) ReactiveVal des ventes avec colonnes entrepot_id et entrepot_nom
+  ventes <- reactiveVal({
+    if (file.exists("ventes.csv")) {
+      read_csv("ventes.csv", col_types = cols(
+        vente_id      = col_character(),
+        client_id     = col_character(),
+        nom_client    = col_character(),
+        tel_client    = col_character(),
+        adresse_client= col_character(),
+        produit_id    = col_character(),
+        nom_produit   = col_character(),
+        id_commercial = col_character(),
+        canal         = col_character(),
+        quantite      = col_double(),
+        montant_total = col_double(),
+        remise        = col_double(),
+        commentaire   = col_character(),
+        moy_livraison = col_character(),
+        entrepot_id   = col_character(),
+        entrepot_nom  = col_character(),
+        date_vente    = col_date(format = "%Y-%m-%d")
+      ))
+    } else {
+      tibble(
+        vente_id      = character(),
+        client_id     = character(),
+        nom_client    = character(),
+        tel_client    = character(),
+        adresse_client= character(),
+        produit_id    = character(),
+        nom_produit   = character(),
+        id_commercial = character(),
+        canal         = character(),
+        quantite      = numeric(),
+        montant_total = numeric(),
+        remise        = numeric(),
+        commentaire   = character(),
+        moy_livraison = character(),
+        entrepot_id   = character(),
+        entrepot_nom  = character(),
+        date_vente    = as.Date(character())
+      )
+    }
+  })
+  
+  # 2) Peupler les selectInput de ventes (clients, produits, commerciaux… et entrepôts)
+ 
+  
+  observe({
+    updateSelectInput(
+      session, "id_client",
+      choices = clients()$customer_id
+    )
+    updateSelectInput(
+      session, "id_produit",
+      choices = data_produits()$product_id
+    )
+    updateSelectInput(
+      session, "id_commercial",
+      choices = setNames(commerciaux_data()$id_commercial,
+                         commerciaux_data()$nom)
+    )
+    updateSelectInput(
+      session, "vente_entrepot",
+      choices = setNames(
+        entrepots()$entrepot_id,
+        paste(entrepots()$entrepot_id, "-", entrepots()$nom_entrepot)
+      )
+    )
+    
+    updateSelectInput(
+      session, "id_commercial",
+      choices = setNames(
+        commerciaux_data()$id_commercial,
+        commerciaux_data()$nom
+      )
+    )
+    
+  })
+  
+  
+  # 3) Enregistrement d’une nouvelle vente avec vérification et MAJ du stock
+  observeEvent(input$submit_vente, {
+    # validations de base
+    req(input$id_client, input$id_produit, input$id_commercial,
+        input$quantite_vente > 0, input$prix_vente > 0)
+    if (input$remise < 0 || input$remise > 100) {
+      showNotification("La remise doit être entre 0 et 100%", type = "error")
+      return()
+    }
+    if (input$remise > 50) {
+      showNotification(paste0("Remise élevée ! (", input$remise, "%)"), type = "warning")
+    }
+    
+    # vérification stock
+    sd <- stock_data()
+    idx <- which(sd$product_id == input$id_produit & sd$depot == input$vente_entrepot)
+    available_qty <- if (length(idx)==0) 0 else sd$quantite[idx]
+    if (input$quantite_vente > available_qty) {
+      showNotification("Stock insuffisant dans l’entrepôt sélectionné.", type = "error")
+      return()
+    }
+    
+    tryCatch({
+      # mise à jour du stock
+      update_stock(
+        product_id = input$id_produit,
+        depot      = input$vente_entrepot,
+        movement   = "sortie_vente",
+        qty        = input$quantite_vente,
+        date       = Sys.Date(),
+        prix       = input$prix_vente
+      )
+      
+      # création de l'enregistrement de vente
+      new_vente <- tibble(
+        vente_id      = next_vente_id(),
+        client_id     = input$id_client,
+        nom_client    = input$client_nom,
+        tel_client    = input$client_tel,
+        adresse_client= input$client_adresse,
+        produit_id    = input$id_produit,
+        nom_produit   = input$produit_nom,
+        id_commercial = input$id_commercial,
+        canal         = input$canal,
+        quantite      = input$quantite_vente,
+        montant_total = calculate_montant(),
+        remise        = input$remise,
+        commentaire   = input$commentaire,
+        moy_livraison = input$moy_livraison,
+        entrepot_id   = input$vente_entrepot,
+        entrepot_nom  = entrepots()$nom_entrepot[entrepots()$entrepot_id == input$vente_entrepot],
+        date_vente    = Sys.Date()
+      )
+      
+      # sauvegarde
+      ventes(bind_rows(ventes(), new_vente))
+      write_csv(ventes(), "ventes.csv")
+      showNotification("Vente enregistrée avec succès !", type = "message")
+      
+      # réinitialisation
+      updateSelectInput(session, "id_client", selected = "")
+      updateSelectInput(session, "id_produit", selected = "")
+      updateSelectInput(session, "id_commercial", selected = "")
+      updateSelectInput(session, "vente_entrepot", selected = "")
+      updateNumericInput(session, "quantite_vente", value = 1)
+      updateNumericInput(session, "remise", value = 0)
+      updateNumericInput(session, "prix_vente", value = 0)
+      updateTextAreaInput(session, "commentaire", value = "")
+      updateSelectInput(session, "moy_livraison", selected = "ORANGE MONAY")
+      
+    }, error = function(e) {
+      showNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # Mise à jour automatique des infos client lors de la sélection
+  observeEvent(input$id_client, {
+    req(input$id_client)
+    client <- clients() %>% filter(customer_id == input$id_client)
+    if(nrow(client) > 0){
+      updateTextInput(session, "client_nom", value = client$name[1])
+      updateTextInput(session, "client_tel", value = client$numero[1])
+      updateTextInput(session, "client_adresse", value = client$adresse_livraison[1])
+    }
+  })
+  
+  # Mise à jour automatique du nom du produit et du prix vente lors de la sélection
+  observeEvent(input$id_produit, {
+    req(input$id_produit)
+    product <- data_produits() %>% filter(product_id == input$id_produit)
+    if(nrow(product) > 0){
+      updateTextInput(session, "produit_nom", value = product$nom_produit[1])
+      updateNumericInput(session, "prix_vente", value = product$prix_achat[1])
+    }
+  })
+  
+  # Désactivation de la modification sur certains champs
+  disable("client_nom")
+  disable("client_tel")
+  disable("produit_nom")
+  
+  # Génération automatique du prochain ID vente
+  next_vente_id <- reactive({
+    existing_ids <- ventes()$vente_id
+    if(length(existing_ids) == 0) return("VENTE-001")
+    max_num <- max(as.numeric(gsub("VENTE-", "", existing_ids)))
+    sprintf("VENTE-%03d", max_num + 1)
+  })
+  
+  # Calcul du montant total en fonction du prix vente, de la quantité et de la remise
+  calculate_montant <- reactive({
+    req(input$id_produit, input$quantite_vente, input$remise, input$prix_vente)
+    quant <- as.numeric(input$quantite_vente)
+    remise_val <- as.numeric(input$remise)
+    unit_price <- as.numeric(input$prix_vente)
+    total <- unit_price * quant * (1 - remise_val/100)
+    total
+  })
+  
+  # Affichage du montant total
+  output$montant_total_display <- renderText({
+    paste("Montant Total:", round(calculate_montant(), 2))
+  })
+  
+
+  # Modification d'une vente
+  observeEvent(input$edit_vente_btn, {
+    req(input$edit_vente_id)
+    vente_id <- toupper(input$edit_vente_id)
+    vente <- ventes() %>% filter(vente_id == vente_id)
+    if(nrow(vente) == 0){
+      showNotification("ID Vente non trouvé", type = "error")
+      return()
+    }
+    # Récupération du prix d'achat par défaut pour le produit de la vente
+    product_selected <- data_produits() %>% filter(product_id == vente$produit_id)
+    default_sale_price <- if(nrow(product_selected) > 0) product_selected$prix_achat[1] else 0
+    
+    showModal(modalDialog(
+      title = "Modifier Vente",
+      selectInput("edit_id_client", "ID Client", choices = clients()$customer_id, selected = vente$client_id),
+      textInput("edit_client_nom", "Nom Client", value = vente$nom_client),
+      textInput("edit_client_tel", "Téléphone", value = vente$tel_client),
+      textInput("edit_client_adresse", "Adresse Client", value = vente$adresse_client),
+      selectInput("edit_id_produit", "ID Produit", choices = data_produits()$product_id, selected = vente$produit_id),
+      textInput("edit_produit_nom", "Nom Produit", value = vente$nom_produit),
+      numericInput("edit_prix_vente", "Prix Vente", value = default_sale_price, min = 0),
+      textInput("edit_produit_nom", "Nom Produit", value = vente$nom_produit),
+      selectInput("edit_canal", "Canal de Vente", choices = c("PUB", "commercial", "recommandation"), selected = vente$canal),
+      numericInput("edit_quantite_vente", "Quantité", value = vente$quantite, min = 1),
+      numericInput("edit_remise", "Remise (%)", value = vente$remise, min = 0, max = 100),
+      textAreaInput("edit_commentaire", "Commentaire", value = vente$commentaire, rows = 3),
+      selectInput("edit_moy_livraison", "Moyen de Livraison", choices = c("express", "standard", "autre"), selected = vente$moy_livraison),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_edit_vente", "Sauvegarder", class = "btn-primary")
+      )
+    ))
+  })
+  
+  # Confirmation de la modification d'une vente
+  observeEvent(input$confirm_edit_vente, {
+    tryCatch({
+      updated_ventes <- ventes()
+      vente_id <- input$edit_vente_id
+      idx <- which(updated_ventes$vente_id == vente_id)
+      if(length(idx) == 0) stop("Vente introuvée")
+      
+      unit_price <- as.numeric(input$edit_prix_vente)
+      quant <- as.numeric(input$edit_quantite_vente)
+      remise_val <- as.numeric(input$edit_remise)
+      montant_total <- unit_price * quant * (1 - remise_val/100)
+      
+      updated_ventes[idx, ] <- tibble(
+        vente_id = vente_id,
+        client_id = input$edit_id_client,
+        nom_client = input$edit_client_nom,
+        tel_client = input$edit_client_tel,
+        adresse_client = input$edit_client_adresse,
+        produit_id = input$edit_id_produit,
+        nom_produit = input$edit_produit_nom,
+        id_commercial = input$edit_id_commercial,
+        canal = input$edit_canal,
+        quantite = as.numeric(input$edit_quantite_vente),
+        montant_total = montant_total,
+        remise = as.numeric(input$edit_remise),
+        commentaire = input$edit_commentaire,
+        moy_livraison = input$edit_moy_livraison,
+        date_vente = updated_ventes$date_vente[idx]
+      )
+      
+      write_csv(updated_ventes, "ventes.csv")
+      ventes(updated_ventes)
+      removeModal()
+      showNotification("Modification réussie !", type = "message")
+    }, error = function(e){
+      showNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # Suppression d'une vente
+  observeEvent(input$delete_vente_btn, {
+    req(input$delete_vente_id)
+    showModal(modalDialog(
+      title = "Confirmer suppression",
+      paste("Supprimer la vente", input$delete_vente_id, "?"),
+      footer = tagList(
+        modalButton("Annuler"),
+        actionButton("confirm_delete_vente", "Confirmer", class = "btn-danger")
+      )
+    ))
+  })
+  
+  observeEvent(input$confirm_delete_vente, {
+    tryCatch({
+      vente_id <- toupper(input$delete_vente_id)
+      updated_ventes <- ventes() %>% filter(vente_id != vente_id)
+      ventes(updated_ventes)
+      write_csv(updated_ventes, "ventes.csv")
+      removeModal()
+      showNotification("Vente supprimée", type = "message")
+    }, error = function(e){
+      showNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # Affichage interactif des ventes
+  output$table_ventes <- renderDT({
+    datatable(
+      ventes(),
+      options = list(
+        scrollX = TRUE,
+        language = list(url = "//cdn.datatables.net/plug-ins/1.10.21/i18n/French.json")
+      ),
+      rownames = FALSE
+    )
+  })
+  
+  # Export des ventes en Excel
+  output$export_vente_btn <- downloadHandler(
+    filename = function(){
+      paste("ventes_", Sys.Date(), ".xlsx", sep = "")
+    },
+    content = function(file){
+      write.xlsx(ventes(), file)
+    }
+  )
+  
+  
+  ##### MODULE GESTION STOCK (NOUVEAU) #####
+  
+  # 1) Reactive data with unified columns
+  stock_data <- reactiveVal({
+    cols <- cols(
+      product_id = col_character(), supplier_id = col_character(), category = col_character(),
+      color = col_character(), depot = col_character(), movement = col_character(),
+      quantite = col_double(), prix = col_double(), date = col_date(format = "%Y-%m-%d"),
+      status = col_character()
+    )
+    if (file.exists("stock.csv")) {
+      read_csv("stock.csv", col_types = cols)
+    } else {
+      tibble(product_id = character(), supplier_id = character(), category = character(),
+             color = character(), depot = character(), movement = character(), quantite = numeric(),
+             prix = numeric(), date = as.Date(character()), status = character())
+    }
+  })
+  
+  stock_movements <- reactiveVal({
+    cols_sm <- cols(
+      product_id = col_character(), supplier_id = col_character(), category = col_character(),
+      color = col_character(), depot = col_character(), movement = col_character(),
+      quantite = col_double(), prix = col_double(), date = col_date(format = "%Y-%m-%d"),
+      status = col_character()
+    )
+    if (file.exists("stock_movements.csv")) {
+      read_csv("stock_movements.csv", col_types = cols_sm)
+    } else {
+      tibble(
+        product_id = character(), supplier_id = character(), category = character(),
+        color = character(), depot = character(), movement = character(), quantite = numeric(),
+        prix = numeric(), date = as.Date(character()), status = character()
+      )
+    }
+  })
+  
+  # 2) Mettre à jour listes déroulantes
+  observe({
+    # produits : afficher nom, stocker ID
+    prods <- data_produits()
+    updateSelectInput(session, "stock_product",
+                      choices = setNames(prods$product_id, prods$nom_produit)
+    )
+    updateSelectInput(session, "transfer_product",
+                      choices = setNames(prods$product_id, prods$nom_produit)
+    )
+    # entrepôts : afficher ID
+    ents <- entrepots()
+    updateSelectInput(session, "stock_depot", choices = ents$entrepot_id)
+    updateSelectInput(session, "transfer_from", choices = ents$entrepot_id)
+    updateSelectInput(session, "transfer_to",   choices = ents$entrepot_id)
+    # filtre historique
+    updateSelectInput(session, "stock_history_product",
+                      choices = c("Tous", prods$product_id)
+    )
+  })
+  
+  # 3) Auto-update et désactivation du champ prix
+  observeEvent(input$stock_product, {
+    req(input$stock_product)
+    prod <- data_produits() %>% filter(product_id == input$stock_product)
+    if (nrow(prod)==1) {
+      updateNumericInput(session, "stock_prix", value = prod$prix_achat[1])
+    }
+    disable("stock_prix")
+  })
+  
+  # 4) Fonction de mise à jour du stock et historique
+  update_stock <- function(product_id, depot, movement, qty, date, prix) {
+    # rassembler métadonnées produit
+    prod <- data_produits() %>% filter(product_id==product_id)
+    if (nrow(prod)==0) stop("Produit introuvable")
+    supplier <- prod$supplier_id[1]
+    category <- prod$categorie[1]
+    color    <- prod$couleur[1]
+    
+    # mise à jour stock actuel
+    sd <- stock_data()
+    row_idx <- which(sd$product_id==product_id & sd$depot==depot)
+    sign <- ifelse(grepl("sortir|sortie", tolower(movement)), -1, 1)
+    new_qty <- if (length(row_idx)==0) sign*qty else sd$quantite[row_idx] + sign*qty
+    if (new_qty < 0) stop("Stock insuffisant")
+    
+    record <- tibble(
+      product_id = product_id, supplier_id = supplier, category = category,
+      color = color, depot = depot, movement = movement,
+      quantite = new_qty, prix = prix, date = date,
+      status = ifelse(new_qty>0, "Disponible", "Rupture")
+    )
+    # mise à jour ou ajout
+    if (length(row_idx)==0) sd <- bind_rows(sd, record) else sd[row_idx,] <- record
+    stock_data(sd)
+    write_csv(sd, "stock.csv")
+    
+    # historique
+    hm <- stock_movements()
+    hist_record <- mutate(record, quantite = sign*qty)
+    hm <- bind_rows(hm, hist_record)
+    stock_movements(hm)
+    write_csv(hm, "stock_movements.csv")
+  }
+  
+  # 5) Enregistrement d'un mouvement manuel
+  observeEvent(input$submit_stock, {
+    req(input$stock_product, input$stock_depot, input$stock_movement, input$stock_qty, input$stock_date)
+    tryCatch({
+      update_stock(
+        product_id = input$stock_product,
+        depot      = input$stock_depot,
+        movement   = input$stock_movement,
+        qty        = input$stock_qty,
+        date       = input$stock_date,
+        prix       = input$stock_prix
+      )
+      showNotification("Mouvement de stock enregistré.", type = "message")
+    }, error = function(e) {
+      showNotification(paste("Erreur :", e$message), type = "error")
+    })
+  })
+  
+  # 6) Transferts entre entrepôts
+  observeEvent(input$submit_transfer, {
+    req(input$transfer_product, input$transfer_from, input$transfer_to, input$transfer_qty)
+    # Vérifier que les entrepôts sont différents
+    if (input$transfer_from == input$transfer_to) {
+      showNotification("Les entrepôts doivent différer.", type = "error")
+      return()
+    }
+    # Vérifier le stock disponible dans le dépôt de départ
+    sd <- stock_data()
+    idx <- which(sd$product_id == input$transfer_product & sd$depot == input$transfer_from)
+    available_qty <- if (length(idx) == 0) 0 else sd$quantite[idx]
+    if (input$transfer_qty > available_qty) {
+      showNotification("Stock insuffisant pour ce transfert.", type = "error")
+      return()
+    }
+    # Effectuer la sortie puis l'entrée
+    for (step in c("sortie", "entrée")) {
+      move <- ifelse(step == "sortie", "transfert_sortir", "transfert_entré")
+      depot <- ifelse(step == "sortie", input$transfer_from, input$transfer_to)
+      tryCatch({
+        update_stock(
+          product_id = input$transfer_product,
+          depot      = depot,
+          movement   = move,
+          qty        = input$transfer_qty,
+          date       = Sys.Date(),
+          prix       = input$stock_prix
+        )
+      }, error = function(e) {
+        showNotification(paste("Erreur", step, ":", e$message), type = "error")
+        return()
+      })
+    }
+    showNotification("Transfert effectué avec succès.", type = "message")
+  })
+  
+  # 7) Affichage de l'historique Affichage de l'historique
+  output$table_stock <- renderDT({
+    df <- stock_movements()
+    if (!is.null(input$stock_history_product) && input$stock_history_product!="Tous") {
+      df <- filter(df, product_id==input$stock_history_product)
+    }
+    datatable(df %>% rename(
+      "Produit"          = product_id,
+      "Entrepôt"         = depot,
+      "Type"             = movement,
+      "Quantité"         = quantite,
+      "Prix"             = prix,
+      "Date"             = date,
+      "Statut"           = status
+    ), rownames=FALSE, options = list(order=list(list(6,"desc"))))
+  })
+  
+  
+}
+
+# Lancement de l'application Shiny
+shinyApp(ui, server)
