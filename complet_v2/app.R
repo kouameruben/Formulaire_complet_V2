@@ -1731,15 +1731,15 @@ server <- function(input, output, session) {
       # Génération du recu PDF
      recu_file <- file.path("recus", paste0("recu_", new_id, ".pdf"))
       
-      rmarkdown::render(
-       input       = "recu_template.Rmd",
-       output_file = recu_file,
-       params      = list(vente = vente_info),
-      envir       = new.env(parent = globalenv()),
-         quiet       = TRUE
-      )
+      #rmarkdown::render(
+      #input       = "recu_template.Rmd",
+      # output_file = recu_file,
+      # params      = list(vente = vente_info),
+      #envir       = new.env(parent = globalenv()),
+      #   quiet       = TRUE
+      #)
       
-      dernier_recu_path(recu_file)
+      #dernier_recu_path(recu_file)
       
       # Notification (optionnelle)
       shinyalert(
