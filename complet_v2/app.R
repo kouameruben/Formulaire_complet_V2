@@ -1,4 +1,4 @@
-# Chargement des bibliothèques
+# Chargement des bibliothÃ¨ques
 library(shiny)
 library(shinyalert)
 library(shinyjs)
@@ -22,14 +22,14 @@ library(plotly)
 library(scales)
 library(zoo)
 library(sodium)
-library(rmarkdown)
+#library(rmarkdown)
 library(knitr)
 library(fs)
 
 
 
 
-# Crée ou ouvre la base SQLite avec pool
+# CrÃ©e ou ouvre la base SQLite avec pool
 
 db_file <- "bd_fatal_projet2.sqlite"
 
@@ -42,7 +42,7 @@ pool <- dbPool(
 
 conn <- dbConnect(RSQLite::SQLite(), db_file)
 
-# Mode WAL pour performance/concurrence et clés étrangeres
+# Mode WAL pour performance/concurrence et clÃ©s Ã©trangeres
 dbExecute(pool, "PRAGMA journal_mode = WAL;")
 dbExecute(pool, "PRAGMA foreign_keys = ON;")
 
@@ -56,7 +56,7 @@ ventes_df         <- dbGetQuery(pool, "SELECT * FROM ventes;")
 objectifs_df      <- dbGetQuery(pool, "SELECT * FROM objectifs;")
 obj_journalier_df <- dbGetQuery(pool, "SELECT * FROM objectifs_journalier;")
 
-# Chargement des données géographiques
+# Chargement des donnÃ©es gÃ©ographiques
 donnees_geographiques <- read_excel("worldcities.xlsx")
 
 ######## Interface utilisateur ########
@@ -96,7 +96,7 @@ ui <- fluidPage(
     "))
   )
   #,
-  #### Utilisation d'un tabsetPanel pour regrouper les différents modules ####
+  #### Utilisation d'un tabsetPanel pour regrouper les diffÃ©rents modules ####
   
  # div(
  #  id = "login_panel",
@@ -129,14 +129,14 @@ ui <- fluidPage(
                  tags$div(class = "well",
                           h4(icon("user-plus"), "Nouveau Client", style = "color: #3498db;"),
                           textInput("name", tags$span("Nom", tags$span("*", style = "color: red;"))),
-                          textInput("prenom", "Prénom"),
+                          textInput("prenom", "PrÃ©nom"),
                           textInput("email", "Email"),
-                          textInput("numero", tags$span("Téléphone", tags$span("*", style = "color: red;"))),
+                          textInput("numero", tags$span("TÃ©lÃ©phone", tags$span("*", style = "color: red;"))),
                           selectInput("pays", "Pays", choices = unique(donnees_geographiques$pays)),
                           selectInput("ville", "Ville", choices = NULL),
                           textInput("quartier", "Quartier", placeholder = "Quartier"),
                           textAreaInput("adresse_livraison", "Adresse", placeholder = "Adresse complete de livraison...", rows = 3),
-                          textAreaInput("preferences", "Préférences", placeholder = "Préférences particulieres...", rows = 3),
+                          textAreaInput("preferences", "PrÃ©fÃ©rences", placeholder = "PrÃ©fÃ©rences particulieres...", rows = 3),
                           actionButton("submit", "Enregistrer", class = "btn-primary", icon = icon("save"))
                  ),
                  tags$div(class = "well",
@@ -183,14 +183,14 @@ ui <- fluidPage(
                           textInput("nom_produit", tags$span("Nom du produit", tags$span("*", style = "color: red;"))),
                           selectInput("fournisseur_id", tags$span("ID Fournisseur", tags$span("*", style = "color: red;")), choices = NULL),
                           fileInput("photo", "Photo (PNG/JPG)", accept = c("image/png", "image/jpeg")),
-                          selectInput("categorie", "Catégorie", choices = c("Savon solide", "Savon liquide", "Gel douche", "Savon en poudre")),
+                          selectInput("categorie", "CatÃ©gorie", choices = c("Savon solide", "Savon liquide", "Gel douche", "Savon en poudre")),
                           textAreaInput("description", "Description", rows = 3),
                           selectInput("couleur", "Couleur", choices = c("Rouge","Bleu","Vert","Jaune","Noir","Blanc","Gris","Orange","Violet","Rose")),
                           numericInput("prix_achat", "Prix d'achat", value = 0, min = 0, step = 0.01),
                           textInput("marque", "Marque"),
                           numericInput("volume", "Volume (ml)", value = 100, min = 0),
                           numericInput("poids", "Poids (g)", value = 100, min = 0),
-                          textInput("materiau", "Matériau"),
+                          textInput("materiau", "MatÃ©riau"),
                           actionButton("submit_produit", "Enregistrer", class = "btn-primary", icon = icon("save"))
                  ),
                  
@@ -244,7 +244,7 @@ ui <- fluidPage(
                                     tags$span("Email", tags$span("*", style = "color: red;")),
                                     placeholder = "contact@abc.com"),
                           textInput("fournisseur_telephone",
-                                    tags$span("Téléphone", tags$span("*", style = "color: red;")),
+                                    tags$span("TÃ©lÃ©phone", tags$span("*", style = "color: red;")),
                                     placeholder = "+225 07 12 34 56 78"),
                           selectInput("fournisseur_pays", "Pays", choices = unique(donnees_geographiques$pays)),
                           selectInput("fournisseur_type", "Type", choices = c("Local", "International")),
@@ -301,10 +301,10 @@ ui <- fluidPage(
                           textInput("commerciaux_nom", tags$span("Nom", tags$span("*", style = "color: red;")), 
                                     placeholder = "Nom complet"),
                           selectInput("commerciaux_genre", tags$span("Genre", tags$span("*", style = "color: red;")), 
-                                      choices = c("Masculin", "Féminin", "Autre")),
+                                      choices = c("Masculin", "FÃ©minin", "Autre")),
                           textInput("commerciaux_adresse", tags$span("Adresse", tags$span("*", style = "color: red;")), 
                                     placeholder = "Adresse complete"),
-                          textInput("commerciaux_tel", tags$span("Téléphone", tags$span("*", style = "color: red;")), 
+                          textInput("commerciaux_tel", tags$span("TÃ©lÃ©phone", tags$span("*", style = "color: red;")), 
                                     placeholder = "Ex: +255 07 ..."),
                           actionButton("commerciaux_submit", "Enregistrer", class = "btn-primary", icon = icon("save"))
                  ),
@@ -352,7 +352,7 @@ ui <- fluidPage(
                           selectInput("stock_product", "Produit", choices = NULL),
                           selectInput("stock_depot", "Entrepot", choices = NULL),
                           selectInput("stock_movement", "Type de mouvement", choices = c("Livraison", "sortir")),
-                          numericInput("stock_qty", "Quantité", value = 0, min = 0),
+                          numericInput("stock_qty", "QuantitÃ©", value = 0, min = 0),
                           dateInput("stock_date", "Date du mouvement", value = Sys.Date()),
                           numericInput("stock_prix", "Prix d'achat", value = 0, min = 0, step = 0.01),
                           actionButton("submit_stock", "Enregistrer le mouvement", class = "btn-primary", icon = icon("save"))
@@ -362,8 +362,8 @@ ui <- fluidPage(
                           selectInput("transfer_product", "Produit", choices = NULL),
                           selectInput("transfer_from",   "Depuis", choices = NULL),
                           selectInput("transfer_to",     "Vers",   choices = NULL),
-                          numericInput("transfer_qty", "Quantité", value = 0, min = 0),
-                          actionButton("submit_transfer", "Transférer", class = "btn-warning", icon = icon("exchange-alt"))
+                          numericInput("transfer_qty", "QuantitÃ©", value = 0, min = 0),
+                          actionButton("submit_transfer", "TransfÃ©rer", class = "btn-warning", icon = icon("exchange-alt"))
                  )
                ),
                mainPanel(
@@ -393,7 +393,7 @@ ui <- fluidPage(
                           h4(icon("plus-circle"), "Nouveau Entrepot", style = "color: #3498db;"),
                           textInput("entrepot_nom", "Nom de l'entrepot"),
                           textInput("entrepot_responsable", "Nom du responsable"),
-                          textInput("entrepot_tel", "Téléphone"),
+                          textInput("entrepot_tel", "TÃ©lÃ©phone"),
                           textInput("entrepot_adresse", "Adresse"),
                           actionButton("submit_entrepot", "Enregistrer", class = "btn-primary", icon = icon("save"))
                  ),
@@ -429,9 +429,9 @@ ui <- fluidPage(
         sidebarPanel(
           width = 4,
           selectInput("obj_commercial", "Commercial", choices = NULL),
-          selectInput("obj_annee", "Année", choices = 2020:2050),
+          selectInput("obj_annee", "AnnÃ©e", choices = 2020:2050),
           selectInput("obj_mois", "Mois", choices = sprintf("%02d", 1:12)),
-          numericInput("obj_quantite", "Quantité cible (mois)", value = 0, min = 0),
+          numericInput("obj_quantite", "QuantitÃ© cible (mois)", value = 0, min = 0),
           numericInput("obj_montant", "Montant cible (mois)", value = 0, min = 0, step = 0.01),
           actionButton("save_objectif", "Enregistrer", class = "btn-primary"),
           actionButton("edit_objectif", "Modifier", class = "btn-warning"),
@@ -462,7 +462,7 @@ ui <- fluidPage(
                           h4(icon("plus-circle"), "Nouvelle Vente", style = "color: #3498db;"),
                           selectInput("id_client", "ID Client", choices = NULL),
                           textInput("client_nom", "Nom Client", value = "", placeholder = "Nom"),
-                          textInput("client_tel", "Téléphone", value = "", placeholder = "Téléphone"),
+                          textInput("client_tel", "TÃ©lÃ©phone", value = "", placeholder = "TÃ©lÃ©phone"),
                           textInput("client_adresse", "Adresse Client", value = "", placeholder = "Adresse"),
                           selectInput("vente_entrepot", "Entrepot", choices = NULL),
                           selectInput("id_produit", "ID Produit", choices = NULL),
@@ -470,7 +470,7 @@ ui <- fluidPage(
                           selectInput("id_commercial", "Commercial (ID - Nom)", choices = NULL),
                           numericInput("prix_vente","Prix Vente (unitaire)", value = 0, min = 0),
                           selectInput("canal", "Canal de Vente", choices = c("PUB", "commercial", "recommandation")),
-                          numericInput("quantite_vente", "Quantité", value = 1, min = 1),
+                          numericInput("quantite_vente", "QuantitÃ©", value = 1, min = 1),
                           numericInput("remise", "Remise (%)", value = 0, min = 0, max = 100),
                           textAreaInput("commentaire", "Commentaire", rows = 3),
                           selectInput("moy_livraison", "Moyen de Paiement", choices = c("ORANGE MONAY","MTN MONAY","MOOV MONAY","WAVE","LIQUIDE","CARTE BANCAIRE", "AUTRE")),
@@ -497,8 +497,8 @@ ui <- fluidPage(
                  ),
                  
                  tags$div(class = "well",
-                          h4(icon("file-pdf"), "Reçu vente PDF", style = "color: #e74c3c;"),
-                          downloadButton("telecharger_recu", "Télécharger le reçu PDF", class = "btn-danger"))
+                          h4(icon("file-pdf"), "ReÃ§u vente PDF", style = "color: #e74c3c;"),
+                          downloadButton("telecharger_recu", "TÃ©lÃ©charger le reÃ§u PDF", class = "btn-danger"))
                  
                  
                  
@@ -526,15 +526,15 @@ ui <- fluidPage(
       "Tableau de bord",
       titlePanel("Tableau de bord"),
       
-      # â€” filtres â€”
+      # Ã¢â‚¬â€ filtres Ã¢â‚¬â€
       fluidRow(
-        column(3, dateRangeInput("dash_period",   "Période", start = Sys.Date()-30, end = Sys.Date())),
+        column(3, dateRangeInput("dash_period",   "PÃ©riode", start = Sys.Date()-30, end = Sys.Date())),
         column(3, selectInput("dash_commercial","Commercial", choices = c("Tous", commerciaux_df$id_commercial), multiple=TRUE, selected="Tous")),
         column(3, selectInput("dash_produit",   "Produit",    choices = c("Tous", produits_df$product_id),      multiple=TRUE, selected="Tous")),
         column(3, selectInput("dash_entrepot",  "Entrepot",   choices = c("Tous", entrepots_df$entrepot_id),    multiple=TRUE, selected="Tous"))
       ),
       
-      # â€” KPIs (2 lignes Ã— 4) â€”
+      # Ã¢â‚¬â€ KPIs (2 lignes Ãƒâ€” 4) Ã¢â‚¬â€
       fluidRow(
         valueBoxOutput("vb_ca_realise", width=3),
         valueBoxOutput("vb_ca_attendu", width=3),
@@ -548,13 +548,13 @@ ui <- fluidPage(
         valueBoxOutput("vb_nb_disponible",  width=3)
       ),
       
-      # â€” Courbe des ventes par jour â€”
+      # Ã¢â‚¬â€ Courbe des ventes par jour Ã¢â‚¬â€
       fluidRow(
-        column(12, h4("Ã‰volution quotidienne : Ventes vs Objectifs"),
+        column(12, h4("Ãƒâ€°volution quotidienne : Ventes vs Objectifs"),
                plotlyOutput("sales_by_day", height = "450px"))
       ),
       hr(),
-      # â€” Répartition en camemberts â€”
+      # Ã¢â‚¬â€ RÃ©partition en camemberts Ã¢â‚¬â€
       fluidRow(
         column(4, plotlyOutput("pie_entrepot", height="250px")),
         column(4, ""),
@@ -590,7 +590,7 @@ server <- function(input, output, session) {
   obj_journalier  <- reactiveVal(dbGetQuery(pool, "SELECT * FROM objectifs_journalier;"))
   dernier_recu_path <- reactiveVal(NULL)
   sanitize_latex <- function(text) {
-    text <- gsub("([%&$#_{}])", "\\\\\\1", text) # caractères spéciaux LaTeX
+    text <- gsub("([%&$#_{}])", "\\\\\\1", text) # caractÃ¨res spÃ©ciaux LaTeX
     text <- gsub("~", "\\\\textasciitilde{}", text)
     text <- gsub("\\^", "\\\\textasciicircum{}", text)
     text <- iconv(text, from = "", to = "ASCII//TRANSLIT") # accents
@@ -601,7 +601,7 @@ server <- function(input, output, session) {
   
   
   #### I) MODULE GESTION CLIENTS #####
-  #1.0) Mise à jour des villes selon le pays sélectionné ----
+  #1.0) Mise Ã  jour des villes selon le pays sÃ©lectionnÃ© ----
   
   observe({
     req(input$pays)
@@ -612,7 +612,7 @@ server <- function(input, output, session) {
     updateSelectInput(session, "ville", choices = villes)
   })
   
-  # Notification personnalisée pour les clients
+  # Notification personnalisÃ©e pour les clients
   myNotification <- function(msg, type = "message") {
     notif_type <- switch(type,
                          "message" = "success",
@@ -656,7 +656,7 @@ server <- function(input, output, session) {
       
       
       
-      # Miroir mémoire
+      # Miroir mÃ©moire
       df <- clients()
       df <- bind_rows(df, tibble(
         customer_id        = new_id,
@@ -673,9 +673,9 @@ server <- function(input, output, session) {
       ))
       clients(df)
       
-      shinyalert("Client ajouté !", type = "success")
+      shinyalert("Client ajoutÃ© !", type = "success")
       
-      # Réinitialisation des champs
+      # RÃ©initialisation des champs
       
       updateTextInput(session, "name", value = "")
       updateTextInput(session, "prenom", value = "")
@@ -720,14 +720,14 @@ server <- function(input, output, session) {
     showModal(modalDialog(
       title = "Modifier Client",
       textInput("edit_name", "Nom *", value = row$name),
-      textInput("edit_prenom", "Prénom", value = row$prenom),
+      textInput("edit_prenom", "PrÃ©nom", value = row$prenom),
       textInput("edit_email", "Email", value = row$email),
-      textInput("edit_numero", "Numéro", value = row$numero),
+      textInput("edit_numero", "NumÃ©ro", value = row$numero),
       selectInput("edit_pays", "Pays", choices = unique(donnees_geographiques$pays), selected = row$pays),
       selectInput("edit_ville", "Ville", choices = NULL,     selected = row$ville),
       textInput("edit_quartier", "Quartier", value = row$quartier),
       textAreaInput("edit_adresse_livraison", "Adresse de livraison", value = row$adresse_livraison),
-      textAreaInput("edit_preferences", "Préférences", value = row$preferences),
+      textAreaInput("edit_preferences", "PrÃ©fÃ©rences", value = row$preferences),
       footer = tagList(
         modalButton("Annuler"),
         actionButton("confirm_edit_client", "Confirmer", class="btn-success"))
@@ -739,7 +739,7 @@ server <- function(input, output, session) {
   # 1.2.2) Observeur qui capture la validation dans le modal----
   
   observeEvent(input$confirm_edit_client, {
-    # on utilise input$mod_* pour les nouveaux libellés
+    # on utilise input$mod_* pour les nouveaux libellÃ©s
     params <- list(
       input$edit_name,
       input$edit_prenom,
@@ -774,7 +774,7 @@ server <- function(input, output, session) {
       
       
       
-      # Miroir mémoire
+      # Miroir mÃ©moire
       
       df <- clients()
       
@@ -786,7 +786,7 @@ server <- function(input, output, session) {
                 "date_enregistrement")] <-  params[1:10]
       
       clients(df)
-      shinyalert("Client mis à jour !", type = "success")
+      shinyalert("Client mis Ã  jour !", type = "success")
     }, error = function(e) {
       shinyalert(paste("Erreur :", e$message), type = "error")
     })
@@ -814,9 +814,9 @@ server <- function(input, output, session) {
           DELETE FROM clients WHERE customer_id = ?;
         ", params = list(input$edit_id))
       })
-      # Miroir mémoire
+      # Miroir mÃ©moire
       clients(clients() %>% filter(customer_id != input$edit_id))
-      shinyalert("Client supprimé !", type = "success")
+      shinyalert("Client supprimÃ© !", type = "success")
     }, error = function(e) {
       shinyalert(paste("Erreur :", e$message), type = "error")
     })
@@ -844,7 +844,7 @@ server <- function(input, output, session) {
   
   #II) MODULE GESTION PRODUITS #####
   
-  # 2.0.0) Chargement des fournisseurs pour sélecteur
+  # 2.0.0) Chargement des fournisseurs pour sÃ©lecteur
   
   
   observe({updateSelectInput(session, "fournisseur_id",choices = fournisseurs()$supplier_id)})
@@ -859,7 +859,7 @@ server <- function(input, output, session) {
   
   # 2.0.1) Validation du prix
   validate_prix <- function(val) {
-    if (val <= 0) stop("Le prix d'achat doit ÃƒÆ’Ã‚Âªtre strictement positif.")
+    if (val <= 0) stop("Le prix d'achat doit ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªtre strictement positif.")
   }
   
   # 2.1) Ajout d'un produit----
@@ -911,7 +911,7 @@ server <- function(input, output, session) {
     ", params = params)
       })
       
-      # Miroir en mémoire
+      # Miroir en mÃ©moire
       data_produits(bind_rows(data_produits(), tibble(
         product_id = pid,
         supplier_id= input$fournisseur_id,
@@ -928,7 +928,7 @@ server <- function(input, output, session) {
         image       = img_path
       )))
       
-      showNotification("Produit ajouté !", type = "message")
+      showNotification("Produit ajoutÃ© !", type = "message")
       
       # Reset UI
       updateTextInput(session, "nom_produit", value = "")
@@ -961,7 +961,7 @@ server <- function(input, output, session) {
       selectInput("mod_fournisseur_id","ID Fournisseur",
                   choices = fournisseurs()$supplier_id,
                   selected = row$supplier_id),
-      selectInput("mod_categorie","Catégorie",
+      selectInput("mod_categorie","CatÃ©gorie",
                   choices = c("Savon solide","Savon liquide","Gel douche","Savon en poudre"),
                   selected = row$categorie),
       textAreaInput("mod_description","Description",value = row$description),
@@ -972,7 +972,7 @@ server <- function(input, output, session) {
       textInput("mod_marque","Marque", value = row$marque),
       numericInput("mod_volume","Volume", value = row$volume, min = 0),
       numericInput("mod_poids","Poids", value = row$poids, min = 0),
-      textInput("mod_materiau","Matériau", value = row$materiau),
+      textInput("mod_materiau","MatÃ©riau", value = row$materiau),
       footer = tagList(
         modalButton("Annuler"),
         actionButton("confirm_edit_produit","Confirmer", class="btn-success")
@@ -1025,7 +1025,7 @@ server <- function(input, output, session) {
       data_produits(df)
       
       removeModal()
-      showNotification("Produit modifié !", type = "message")
+      showNotification("Produit modifiÃ© !", type = "message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type = "error")
     })
@@ -1057,7 +1057,7 @@ server <- function(input, output, session) {
         )
       })
       data_produits(data_produits() %>% filter(product_id != input$delete_id_produit))
-      showNotification("Produit supprimé !", type = "message")
+      showNotification("Produit supprimÃ© !", type = "message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type = "error")
     })
@@ -1067,7 +1067,7 @@ server <- function(input, output, session) {
     write_csv(updated, "produits.csv")
     data_produits(updated)
     removeModal()
-    showNotification("Produit supprimé.", type = "message")
+    showNotification("Produit supprimÃ©.", type = "message")
   })
   
   # 2.4) Affichage du tableau produits----
@@ -1129,7 +1129,7 @@ server <- function(input, output, session) {
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
       ", params = params)
       })
-      # miroir en mémoire
+      # miroir en mÃ©moire
       df <- fournisseurs()
       df <- bind_rows(df, tibble(
         supplier_id             = new_id,
@@ -1146,7 +1146,7 @@ server <- function(input, output, session) {
         date_creation           = as.character(Sys.Date())
       ))
       fournisseurs(df)
-      showNotification("Fournisseur ajouté !", type="message")
+      showNotification("Fournisseur ajoutÃ© !", type="message")
       # reset
       updateTextInput(session, "fournisseur_nom", "")
       updateTextInput(session, "fournisseur_email", "")
@@ -1174,7 +1174,7 @@ server <- function(input, output, session) {
       title = paste("Modifier", input$edit_fournisseur_id),
       textInput("mod_nom",      "Nom *",            value = row$fournisseur_nom),
       textInput("mod_email",    "Email",            value = row$fournisseur_email),
-      textInput("mod_tel",      "Téléphone *",      value = row$fournisseur_telephone),
+      textInput("mod_tel",      "TÃ©lÃ©phone *",      value = row$fournisseur_telephone),
       textInput("mod_pays",     "Pays",             value = row$fournisseur_pays),
       selectInput("mod_type",   "Type",
                   choices=c("Local","International"),
@@ -1229,7 +1229,7 @@ server <- function(input, output, session) {
         WHERE supplier_id = ?;
       ", params = params)
       })
-      # miroir en mémoire
+      # miroir en mÃ©moire
       df <- fournisseurs()
       idx <- which(df$supplier_id == input$edit_fournisseur_id)
       df[idx, c("fournisseur_nom","fournisseur_email",
@@ -1240,7 +1240,7 @@ server <- function(input, output, session) {
                 "date_creation")] <- params[1:11]
       fournisseurs(df)
       removeModal()
-      showNotification("Fournisseur modifié !", type="message")
+      showNotification("Fournisseur modifiÃ© !", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -1272,7 +1272,7 @@ server <- function(input, output, session) {
       })
       fournisseurs(fournisseurs() %>%
                      filter(supplier_id != input$delete_fournisseur_id))
-      showNotification("Fournisseur supprimé !", type="message")
+      showNotification("Fournisseur supprimÃ© !", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -1314,7 +1314,7 @@ server <- function(input, output, session) {
         ) VALUES (?, ?, ?, ?, ?, ?);
       ", params = params)
       })
-      # miroir mémoire
+      # miroir mÃ©moire
       df <- commerciaux_data()
       df <- bind_rows(df, tibble(
         id_commercial      = new_id,
@@ -1325,7 +1325,7 @@ server <- function(input, output, session) {
         date_enregistrement = as.character(Sys.Date())
       ))
       commerciaux_data(df)
-      showNotification("Commercial ajouté !", type="message")
+      showNotification("Commercial ajoutÃ© !", type="message")
       # reset UI
       updateTextInput(session, "commerciaux_nom", "")
       updateSelectInput(session, "commerciaux_genre", selected = "Masculin")
@@ -1349,13 +1349,13 @@ server <- function(input, output, session) {
       title = paste("Modifier commercial", input$commerciaux_edit_id),
       textInput("mod_com_nom",    "Nom *",     value = row$nom),
       selectInput("mod_com_genre","Genre *",
-                  choices = c("Masculin","Féminin","Autre"),
+                  choices = c("Masculin","FÃ©minin","Autre"),
                   selected = row$genre),
       textInput("mod_com_adresse","Adresse",   value = row$adresse),
-      textInput("mod_com_tel",    "Téléphone *", value = row$tel),
+      textInput("mod_com_tel",    "TÃ©lÃ©phone *", value = row$tel),
       footer = tagList(
         modalButton("Annuler"),
-        actionButton("com_confirm_mod","Mettre à jour", class="btn-success")
+        actionButton("com_confirm_mod","Mettre Ã  jour", class="btn-success")
       ),
       size="l"
     ))
@@ -1384,13 +1384,13 @@ server <- function(input, output, session) {
         WHERE id_commercial = ?;
       ", params = params)
       })
-      # miroir mémoire
+      # miroir mÃ©moire
       df <- commerciaux_data()
       idx <- which(df$id_commercial == input$commerciaux_edit_id)
       df[idx, c("nom","genre","adresse","tel","date_enregistrement")] <- params[1:5]
       commerciaux_data(df)
       removeModal()
-      showNotification("Commercial modifié !", type="message")
+      showNotification("Commercial modifiÃ© !", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -1421,7 +1421,7 @@ server <- function(input, output, session) {
       })
       commerciaux_data(commerciaux_data() %>%
                          filter(id_commercial != input$commerciaux_edit_id))
-      showNotification("Commercial supprimé !", type="message")
+      showNotification("Commercial supprimÃ© !", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -1468,7 +1468,7 @@ server <- function(input, output, session) {
         adresse      = input$entrepot_adresse
       ))
       entrepots(df)
-      showNotification("Entrepot ajouté !", type="message")
+      showNotification("Entrepot ajoutÃ© !", type="message")
       updateTextInput(session, "entrepot_nom", "")
       updateTextInput(session, "entrepot_responsable", "")
       updateTextInput(session, "entrepot_tel", "")
@@ -1491,11 +1491,11 @@ server <- function(input, output, session) {
       title = paste("Modifier entrepot", input$edit_entrepot_id),
       textInput("mod_etp_nom",        "Nom de l'entrepot *", value = row$nom_entrepot),
       textInput("mod_etp_responsable","Nom du responsable",  value = row$responsable),
-      textInput("mod_etp_tel",        "Téléphone *",        value = row$telephone),
+      textInput("mod_etp_tel",        "TÃ©lÃ©phone *",        value = row$telephone),
       textAreaInput("mod_etp_adresse","Adresse",            value = row$adresse, rows=2),
       footer = tagList(
         modalButton("Annuler"),
-        actionButton("etp_confirm_mod","Mettre à jour", class="btn-success")
+        actionButton("etp_confirm_mod","Mettre Ã  jour", class="btn-success")
       ),
       size="l"
     ))
@@ -1526,7 +1526,7 @@ server <- function(input, output, session) {
       df[idx, c("nom_entrepot","responsable","telephone","adresse")] <- params[1:4]
       entrepots(df)
       removeModal()
-      showNotification("Entrepot modifié !", type="message")
+      showNotification("Entrepot modifiÃ© !", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -1556,7 +1556,7 @@ server <- function(input, output, session) {
       })
       entrepots(entrepots() %>%
                   filter(entrepot_id != input$delete_entrepot_id))
-      showNotification("Entrepot supprimé !", type="message")
+      showNotification("Entrepot supprimÃ© !", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -1584,7 +1584,7 @@ server <- function(input, output, session) {
   })
   
   
-  # Quand on sélectionne un client, on complete son nom, son téléphone et son adresse
+  # Quand on sÃ©lectionne un client, on complete son nom, son tÃ©lÃ©phone et son adresse
   
   observeEvent(input$id_client, {
     req(input$id_client)
@@ -1596,7 +1596,7 @@ server <- function(input, output, session) {
     }
   })
   
-  #  Quand on sélectionne un produit, on complete son nom et on initialise le prix de vente
+  #  Quand on sÃ©lectionne un produit, on complete son nom et on initialise le prix de vente
   
   observeEvent(input$id_produit, {
     req(input$id_produit)
@@ -1609,14 +1609,14 @@ server <- function(input, output, session) {
   
   
   
-  #6.2) Création d'une nouvelle vente----
+  #6.2) CrÃ©ation d'une nouvelle vente----
   
   observeEvent(input$submit_vente, {
     
     req(input$id_client, input$id_produit, input$id_commercial,
         input$quantite_vente > 0, input$prix_vente > 0, input$vente_entrepot)
     
-    # 6.2.1) Vérifier le stock disponible
+    # 6.2.1) VÃ©rifier le stock disponible
     
     dispo <- stock() %>%
       filter(product_id == input$id_produit,
@@ -1627,7 +1627,7 @@ server <- function(input, output, session) {
     if (input$quantite_vente > dispo) {
       showNotification(
         paste0("Stock insuffisant : vous demandez ", input$quantite_vente,
-               " unités mais il n'en reste que ", dispo, "."),
+               " unitÃ©s mais il n'en reste que ", dispo, "."),
         type = "error"
       )
       return()
@@ -1660,11 +1660,11 @@ server <- function(input, output, session) {
       as.character(Sys.Date())
     )
     
-    # 6.2.4) Transaction atomique : mise à jour du stock puis insertion de la vente
+    # 6.2.4) Transaction atomique : mise Ã  jour du stock puis insertion de la vente
     
     tryCatch({
       poolWithTransaction(pool, function(conn) {
-        # 6.2.4.1) Mettre à jour le stock
+        # 6.2.4.1) Mettre Ã  jour le stock
         update_stock_db(conn,
                         input$id_produit,
                         input$vente_entrepot,
@@ -1674,7 +1674,7 @@ server <- function(input, output, session) {
                         input$prix_vente
         )
         
-        # 6.2.4.2) Insérer la vente
+        # 6.2.4.2) InsÃ©rer la vente
         dbExecute(conn, "
         INSERT INTO ventes (
           vente_id, client_id, nom_client, tel_client, adresse_client,
@@ -1685,7 +1685,7 @@ server <- function(input, output, session) {
       ", params = params)
       })
       
-      # 6.2.5 miroir en mémoire
+      # 6.2.5 miroir en mÃ©moire
       df <- ventes()
       df <- bind_rows(df, tibble(
         vente_id       = new_id,
@@ -1728,7 +1728,7 @@ server <- function(input, output, session) {
       moy_livraison  = sanitize_latex(input$moy_livraison)
      )
       
-      # Génération du recu PDF
+      # GÃ©nÃ©ration du recu PDF
      recu_file <- file.path("recus", paste0("recu_", new_id, ".pdf"))
       
       #rmarkdown::render(
@@ -1743,7 +1743,7 @@ server <- function(input, output, session) {
       
       # Notification (optionnelle)
       shinyalert(
-        title = "vente enregistrée",
+        title = "vente enregistrÃ©e",
         text = paste0("Vente ok et recu PDF est disponible "),
         type = "success"
       )
@@ -1751,7 +1751,7 @@ server <- function(input, output, session) {
       
       
       
-      showNotification("Vente enregistrée !", type="message")
+      showNotification("Vente enregistrÃ©e !", type="message")
       # reset UI
       updateSelectInput(session, "id_client", selected = "")
       updateSelectInput(session, "id_produit", selected = "")
@@ -1785,10 +1785,10 @@ server <- function(input, output, session) {
       selectInput("mod_id_produit",     "ID Produit",     choices = data_produits()$product_id, selected = row$produit_id),
       selectInput("mod_id_commercial",  "ID Commercial",  choices = commerciaux_data()$id_commercial, selected = row$id_commercial),
       selectInput("mod_entrepot",       "Entrepot",       choices = entrepots()$entrepot_id, selected = row$entrepot_id),
-      numericInput("mod_quantite",      "Quantité",       value = row$quantite, min=1),
+      numericInput("mod_quantite",      "QuantitÃ©",       value = row$quantite, min=1),
       numericInput("mod_remise",        "Remise (%)",     value = row$remise,   min=0, max=100),
       numericInput("mod_prix",          "Prix unitaire",  value = row$montant_total/row$quantite/(1-row$remise/100), min=0),
-      selectInput("mod_canal",          "Canal",          choices = c("face-à-face","distributeurs ","réseaux sociaux","commercial","recommandation"), selected = row$canal),
+      selectInput("mod_canal",          "Canal",          choices = c("face-Ã -face","distributeurs ","rÃ©seaux sociaux","commercial","recommandation"), selected = row$canal),
       selectInput("mod_moy_livraison",  "Moyen Paiement", choices = c("ORANGE MONAY","MTN MONAY","LIQUIDE","CARTE BANCAIRE","AUTRE"), selected = row$moy_livraison),
       footer = tagList(
         modalButton("Annuler"),
@@ -1845,7 +1845,7 @@ server <- function(input, output, session) {
       ", params = params)
       })
       
-      # miroir mémoire
+      # miroir mÃ©moire
       df[idx, c(
         "client_id","produit_id","id_commercial","canal",
         "quantite","remise","montant_total","moy_livraison",
@@ -1854,7 +1854,7 @@ server <- function(input, output, session) {
       ventes(df)
       
       removeModal()
-      showNotification("Vente modifiée !", type="message")
+      showNotification("Vente modifiÃ©e !", type="message")
     }, error = function(e) {
       removeModal()
       showNotification(paste("Erreur :", e$message), type="error")
@@ -1885,7 +1885,7 @@ server <- function(input, output, session) {
       })
       ventes(ventes() %>% filter(vente_id != toupper(input$delete_vente_id)))
       removeModal()
-      showNotification("Vente supprimée !", type="message")
+      showNotification("Vente supprimÃ©e !", type="message")
     }, error = function(e) {
       removeModal()
       showNotification(paste("Erreur :", e$message), type="error")
@@ -1916,7 +1916,7 @@ server <- function(input, output, session) {
   ##### VII) MODULE GESTION STOCK #####
   
   
-  # 7.0.0.0) met à jour stock_prix
+  # 7.0.0.0) met Ã  jour stock_prix
   observeEvent(input$stock_product, {
     req(input$stock_product)
     prod <- data_produits() %>% 
@@ -1928,10 +1928,10 @@ server <- function(input, output, session) {
   
   
   
-  #7.0.0) Helper de mise à jour (INSERT/UPDATE) dans la base----
+  #7.0.0) Helper de mise Ã  jour (INSERT/UPDATE) dans la base----
   
   update_stock_db <- function(conn, product_id, depot, movement_type, qty, date, prix) {
-    # 7.0.1) Lire quantité existante
+    # 7.0.1) Lire quantitÃ© existante
     cur <- dbGetQuery(conn,"SELECT quantite FROM stock WHERE product_id = ? AND depot = ?;",params = list(product_id, depot))
     old_qty <- if (nrow(cur)==1) cur$quantite[1] else 0
     sign <- if (grepl("sortie|sortir", tolower(movement_type))) -1 else 1
@@ -1987,10 +1987,10 @@ server <- function(input, output, session) {
           input$stock_prix
         )
       })
-      # rafraÃƒÂ®chir le cache
+      # rafraÃƒÆ’Ã‚Â®chir le cache
       stock(dbGetQuery(pool, "SELECT * FROM stock;"))
       stock_movements(dbGetQuery(pool, "SELECT * FROM stock_movements;"))
-      showNotification("Mouvement de stock enregistré.", type="message")
+      showNotification("Mouvement de stock enregistrÃ©.", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -2003,13 +2003,13 @@ server <- function(input, output, session) {
     req(input$transfer_product, input$transfer_from,
         input$transfer_to, input$transfer_qty)
     
-    # 7.5.1) Les entrepots doivent différer
+    # 7.5.1) Les entrepots doivent diffÃ©rer
     if (input$transfer_from == input$transfer_to) {
-      showNotification("Les entrepots doivent etre différents.", type = "error")
+      showNotification("Les entrepots doivent etre diffÃ©rents.", type = "error")
       return()
     }
     
-    # 7.5.2) Vérifier le stock disponible dans le dépot de départ
+    # 7.5.2) VÃ©rifier le stock disponible dans le dÃ©pot de dÃ©part
     
     dispo <- stock() %>%
       filter(product_id == input$transfer_product,
@@ -2017,13 +2017,13 @@ server <- function(input, output, session) {
       pull(quantite)
     dispo <- if (length(dispo) == 0) 0 else dispo
     
-    # 7.5.3) EmpÃƒÂªcher le transfert si quantité demandée > dispo
+    # 7.5.3) EmpÃƒÆ’Ã‚Âªcher le transfert si quantitÃ© demandÃ©e > dispo
     
     if (input$transfer_qty > dispo) {
       showNotification(
         paste0(
-          "Impossible de transférer ", input$transfer_qty,
-          " Ã¢â‚¬â€œ stock disponible seulement : ", dispo
+          "Impossible de transfÃ©rer ", input$transfer_qty,
+          " ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Å“ stock disponible seulement : ", dispo
         ),
         type = "error"
       )
@@ -2031,7 +2031,7 @@ server <- function(input, output, session) {
     }
     
     
-    # 7.5.4) Tout est OK, on exécute la transaction
+    # 7.5.4) Tout est OK, on exÃ©cute la transaction
     tryCatch({
       poolWithTransaction(pool, function(conn) {
         update_stock_db(
@@ -2054,10 +2054,10 @@ server <- function(input, output, session) {
         )
       })
       
-      # 7.5.5) RafraÃƒÂ®chir les caches
+      # 7.5.5) RafraÃƒÆ’Ã‚Â®chir les caches
       stock(dbGetQuery(pool, "SELECT * FROM stock;"))
       stock_movements(dbGetQuery(pool, "SELECT * FROM stock_movements;"))
-      showNotification("Transfert effectué avec succes.", type="message")
+      showNotification("Transfert effectuÃ© avec succes.", type="message")
     }, error = function(e) {
       showNotification(paste("Erreur :", e$message), type="error")
     })
@@ -2078,7 +2078,7 @@ server <- function(input, output, session) {
         "Produit"       = product_id,
         "Entrepot"      = depot,
         "Type"          = movement_type,
-        "Quantité"      = quantite,
+        "QuantitÃ©"      = quantite,
         "Prix"          = prix,
         "Date"          = date,
         "Statut"        = status
@@ -2095,24 +2095,24 @@ server <- function(input, output, session) {
     updateSelectInput(session, "obj_commercial", choices = commerciaux_data()$id_commercial)
   })
   
-  # # 8.2) RafraÃƒÂ®chir les caches----
+  # # 8.2) RafraÃƒÆ’Ã‚Â®chir les caches----
   # refresh_objectifs <- function() {
   #   objectifs(dbGetQuery(pool, "SELECT * FROM objectifs;"))
   #   obj_journalier(dbGetQuery(pool, "SELECT * FROM objectifs_journalier;"))
   # }
   
-  # 8.3) Enregistrement ou mise à jour d'un objectif mensuel----
+  # 8.3) Enregistrement ou mise Ã  jour d'un objectif mensuel----
   
   observeEvent(input$save_objectif, {
     req(input$obj_commercial, input$obj_annee, input$obj_mois,
         input$obj_quantite,   input$obj_montant)
     
-    # 1) On récupÃ¨re l'année / le mois en entier pour éviter sprintf %d sur un character
+    # 1) On rÃ©cupÃƒÂ¨re l'annÃ©e / le mois en entier pour Ã©viter sprintf %d sur un character
     year_i  <- as.integer(input$obj_annee)
     month_i <- as.integer(input$obj_mois)
     
-    # 2) Génération de l'ID composite
-    #    on peut garder l'année telle quelle (chaine) ou lui appliquer sprintf si on veut
+    # 2) GÃ©nÃ©ration de l'ID composite
+    #    on peut garder l'annÃ©e telle quelle (chaine) ou lui appliquer sprintf si on veut
     id_obj <- paste(input$obj_commercial, input$obj_annee,
                     sprintf("%02d", month_i),
                     sep = "_")
@@ -2122,7 +2122,7 @@ server <- function(input, output, session) {
     end_dt   <- lubridate::ceiling_date(start_dt, "month") - lubridate::days(1)
     days     <- seq.Date(start_dt, end_dt, by = "day")
     
-    # 4) Répartition journaliÃ¨re
+    # 4) RÃ©partition journaliÃƒÂ¨re
     qty_per_day <- as.numeric(input$obj_quantite) / length(days)
     amt_per_day <- as.numeric(input$obj_montant) / length(days)
     df_journ <- data.frame(
@@ -2168,7 +2168,7 @@ server <- function(input, output, session) {
     objectifs(      dbGetQuery(pool, "SELECT * FROM objectifs;"))
     obj_journalier( dbGetQuery(pool, "SELECT * FROM objectifs_journalier;"))
     
-    showNotification("Objectif enregistré !", type = "message")
+    showNotification("Objectif enregistrÃ© !", type = "message")
   })
   
   
@@ -2182,7 +2182,7 @@ server <- function(input, output, session) {
     datatable(obj_journalier(), options = list(pageLength = 10, scrollX = TRUE))
   })
   
-  # 5) Ãƒâ€°dition et suppression (similaire à vos patterns existants)
+  # 5) ÃƒÆ’Ã¢â‚¬Â°dition et suppression (similaire Ã  vos patterns existants)
   observeEvent(input$edit_objectif, {
     req(input$save_objectif)
     # remplir modal avec les valeurs courantes
@@ -2191,9 +2191,9 @@ server <- function(input, output, session) {
     showModal(modalDialog(
       title = "Modifier objectif mensuel",
       selectInput("obj_commercial", "Commercial", choices = commerciaux_data()$id_commercial, selected = row$id_commercial),
-      selectInput("obj_annee", "Année", choices = 2020:2050, selected = row$annee),
+      selectInput("obj_annee", "AnnÃ©e", choices = 2020:2050, selected = row$annee),
       selectInput("obj_mois", "Mois", choices = sprintf("%02d",1:12), selected = sprintf("%02d", row$mois)),
-      numericInput("obj_quantite", "Quantité cible (mois)", value = row$quantite_cible, min = 0),
+      numericInput("obj_quantite", "QuantitÃ© cible (mois)", value = row$quantite_cible, min = 0),
       numericInput("obj_montant", "Montant cible (mois)", value = row$montant_cible, min = 0, step=0.01),
       footer = tagList(modalButton("Annuler"), actionButton("save_objectif","Enregistrer", class="btn-success")),
       size = "l"
@@ -2216,7 +2216,7 @@ server <- function(input, output, session) {
     })
     objectifs(dbGetQuery(pool, "SELECT * FROM objectifs;"))
     obj_journalier(dbGetQuery(pool, "SELECT * FROM objectifs_journalier;"))
-    showNotification("Objectif supprimé !", type="message")
+    showNotification("Objectif supprimÃ© !", type="message")
   })
   
   
@@ -2234,7 +2234,7 @@ server <- function(input, output, session) {
       arrange(desc(total)) %>% slice_head(n=5)
   }
   
-  # données filtrées
+  # donnÃ©es filtrÃ©es
   dash_data <- reactive({
     df <- ventes() %>%
       filter(date_vente >= input$dash_period[1],
@@ -2248,54 +2248,54 @@ server <- function(input, output, session) {
     df
   })
   
-  # CA réalisé / CA attendu / taux de réalisation du CA
+  # CA rÃ©alisÃ© / CA attendu / taux de rÃ©alisation du CA
   output$vb_ca_realise <- renderValueBox({
     ca_r <- if_else(is.na(sum(dash_data()$montant_total, na.rm=TRUE)),0,sum(dash_data()$montant_total, na.rm=TRUE))
-    valueBox(format_fcfa(ca_r), "CA réalisé", icon=icon("money-bill"), color="green")
+    valueBox(format_fcfa(ca_r), "CA rÃ©alisÃ©", icon=icon("money-bill"), color="green")
   })
   output$vb_ca_attendu <- renderValueBox({
-    pér <- input$dash_period
+    pÃ©r <- input$dash_period
     obj <- objectifs() %>%
       mutate(mois_date = as.Date(sprintf("%04d-%02d-01", annee, mois))) %>%
-      filter(mois_date >= pér[1], mois_date <= pér[2])
+      filter(mois_date >= pÃ©r[1], mois_date <= pÃ©r[2])
     ca_a <- sum(obj$montant_cible, na.rm=TRUE)
     valueBox(format_fcfa(ca_a), "CA attendu", icon=icon("target"), color="yellow")
   })
   output$vb_taux_ca <- renderValueBox({
     cr <- sum(dash_data()$montant_total, na.rm=TRUE)
-    pér <- input$dash_period
+    pÃ©r <- input$dash_period
     ca_a <- objectifs() %>%
       mutate(mois_date = as.Date(sprintf("%04d-%02d-01", annee, mois))) %>%
-      filter(mois_date >= pér[1], mois_date <= pér[2]) %>%
+      filter(mois_date >= pÃ©r[1], mois_date <= pÃ©r[2]) %>%
       summarise(x=sum(montant_cible,na.rm=TRUE)) %>% pull(x)
     pct <- if(ca_a>0) round(cr/ca_a*100,1) else 0
-    valueBox(paste0(pct,"%"), "Taux réalisation CA", icon=icon("percent"), color=if(pct>=100)"olive"else"red")
+    valueBox(paste0(pct,"%"), "Taux rÃ©alisation CA", icon=icon("percent"), color=if(pct>=100)"olive"else"red")
   })
   
-  # Ventes réalisé / Ventes attendu / taux de réalisation des ventes
+  # Ventes rÃ©alisÃ© / Ventes attendu / taux de rÃ©alisation des ventes
   
   output$vb_ventes_realise <- renderValueBox({
     vr <- sum(dash_data()$quantite, na.rm=TRUE)
-    valueBox(vr, "Ventes réalisées (unités)", icon=icon("shopping-cart"), color="purple")
+    valueBox(vr, "Ventes rÃ©alisÃ©es (unitÃ©s)", icon=icon("shopping-cart"), color="purple")
   })
   
   output$vb_ventes_attendu <- renderValueBox({
-    pér <- input$dash_period
+    pÃ©r <- input$dash_period
     obj <- objectifs() %>%
       mutate(mois_date = as.Date(sprintf("%04d-%02d-01", annee, mois))) %>%
-      filter(mois_date >= pér[1], mois_date <= pér[2])
+      filter(mois_date >= pÃ©r[1], mois_date <= pÃ©r[2])
     va <- sum(obj$quantite_cible, na.rm=TRUE)
     valueBox(va, "Ventes attendues", icon=icon("calendar-check"), color="light-blue")
   })
   output$vb_taux_ventes <- renderValueBox({
     vr <- sum(dash_data()$quantite, na.rm=TRUE)
-    pér <- input$dash_period
+    pÃ©r <- input$dash_period
     va <- objectifs() %>%
   mutate(mois_date = as.Date(sprintf("%04d-%02d-01", annee, mois))) %>%
-      filter(mois_date >= pér[1], mois_date <= pér[2]) %>%
+      filter(mois_date >= pÃ©r[1], mois_date <= pÃ©r[2]) %>%
       summarise(x=sum(quantite_cible,na.rm=TRUE)) %>% pull(x)
     pct <- if(va>0) round(vr/va*100,1) else 0
-    valueBox(paste0(pct,"%"), "Taux réalisation ventes", icon=icon("chart-line"), color=if(pct>=100)"teal"else"orange")
+    valueBox(paste0(pct,"%"), "Taux rÃ©alisation ventes", icon=icon("chart-line"), color=if(pct>=100)"teal"else"orange")
   })
   
   # Nombre de produits en rupture / disponibles
@@ -2321,25 +2321,25 @@ server <- function(input, output, session) {
       summarise(objectif = sum(quantite_target, na.rm = TRUE), .groups = "drop") %>%
       rename(date_vente = date_jour)
     
-    # Cas oÃ¹ il n'y a ni vente ni objectif
+    # Cas oÃƒÂ¹ il n'y a ni vente ni objectif
     if (nrow(df_ventes) == 0 && nrow(df_objectifs) == 0) {
       return(plotly_empty(type = "scatter", mode = "lines") %>%
-               layout(title = "Aucune donnée de ventes ou d'objectifs"))
+               layout(title = "Aucune donnÃ©e de ventes ou d'objectifs"))
     }
     
     # Fusion des deux datasets
     df_all <- full_join(df_ventes, df_objectifs, by = "date_vente") %>%
       arrange(date_vente)
     
-    # Remplacement des NA par 0 pour éviter erreurs ggplot
+    # Remplacement des NA par 0 pour Ã©viter erreurs ggplot
     df_all <- df_all %>%
       mutate(across(c(ventes, objectif), ~replace_na(., 0)))
     
     p <- ggplot(df_all, aes(x = as.Date(date_vente))) +
-      geom_line(aes(y = ventes, color = "Ventes réalisées"), size = 1.2) +
+      geom_line(aes(y = ventes, color = "Ventes rÃ©alisÃ©es"), size = 1.2) +
       geom_line(aes(y = objectif, color = "Objectif"), linetype = "dashed", size = 1.2) +
-      scale_color_manual(values = c("Ventes réalisées" = "blue", "Objectif" = "orange")) +
-      labs(x = "Date", y = "Quantité", color = "") +
+      scale_color_manual(values = c("Ventes rÃ©alisÃ©es" = "blue", "Objectif" = "orange")) +
+      labs(x = "Date", y = "QuantitÃ©", color = "") +
       theme_minimal()
     
     ggplotly(p, tooltip = c("x", "y", "color"))
@@ -2352,17 +2352,17 @@ server <- function(input, output, session) {
   output$pie_entrepot <- renderPlotly({
     df <- dash_data() %>% count(entrepot_id)
     plot_ly(df, labels=~entrepot_id, values=~n, type="pie") %>%
-      layout(title="Répartition ventes par entrepot")
+      layout(title="RÃ©partition ventes par entrepot")
   })
   
   # camembert des ventes par produit
   output$pie_produit <- renderPlotly({
     df <- dash_data() %>% count(produit_id)
     plot_ly(df, labels=~produit_id, values=~n, type="pie") %>%
-      layout(title="Répartition ventes par produit")
+      layout(title="RÃ©partition ventes par produit")
   })
   
-  # (facultatif) tableau détaillé
+  # (facultatif) tableau dÃ©taillÃ©
   output$dash_table_detail <- renderDT({
     datatable(
       dash_data() %>%
